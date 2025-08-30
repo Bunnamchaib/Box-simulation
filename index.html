@@ -3,10 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Pallet & Truck Box Simulator</title>
+  <title>📦 Box Simulator - Pallet & Truck Calculator</title>
   <style>
 :root {
-  /* Theme & Color Variables */
+  --primary: #4c6ef5;
+  --primary-dark: #364fc7;
+  --secondary: #20c997;
   --light-bg: #f8f9fa;
   --dark-bg: #181c20;
   --light-card: #fff;
@@ -14,225 +16,619 @@
   --border: #ced4da;
   --stroke: #212529;
   --dimline: #2095ff;
-  --palette-slate: #4c6ef5;
-  --trans-fast: background 0.15s, color 0.15s;
-  --font-head: 700 1.2rem 'Sarabun', Arial, sans-serif;
-  --font-body: 400 1rem 'Sarabun', Arial, sans-serif;
+  --shadow: 0 2px 8px rgba(34,51,68,0.15);
+  --radius: 8px;
+  --trans: all 0.2s ease;
+  --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
+
 [data-theme="dark"] {
   --light-bg: #181c20;
   --light-card: #23272c;
-  --border: #23272c;
+  --border: #394048;
   --stroke: #e9ecef;
+  --shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
+
+* { box-sizing: border-box; }
 body {
+  margin: 0; padding: 0;
+  font-family: var(--font-main);
   background: var(--light-bg);
-  color: #23272c;
-  font: var(--font-body);
-  margin: 0;
-  min-height: 100vh;
-  transition: var(--trans-fast);
+  color: #2d3748;
+  line-height: 1.6;
+  transition: var(--trans);
 }
+
 [data-theme="dark"] body {
   background: var(--dark-bg);
-  color: #f7f7f7;
+  color: #f7fafc;
 }
+
+/* Layout */
 .container {
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
   min-height: 100vh;
 }
-@media (max-width: 800px) {
+
+@media (max-width: 900px) {
   .container { flex-direction: column; }
 }
+
 .sidebar {
-  width: 320px;
-  min-width: 240px;
+  width: 380px;
   background: var(--light-card);
-  padding: 24px 14px;
-  box-shadow: 0 1px 5px #22334422;
+  padding: 24px;
+  box-shadow: var(--shadow);
   border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 1.6rem;
-  transition: var(--trans-fast);
+  overflow-y: auto;
+  transition: var(--trans);
 }
+
 [data-theme="dark"] .sidebar {
   background: var(--dark-card);
-  border-right: 1px solid #33383e;
 }
-@media (max-width: 800px) {
+
+@media (max-width: 900px) {
   .sidebar {
-    width: 100vw; min-width: unset;
+    width: 100%;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    box-shadow: none;
   }
 }
+
 .main {
   flex: 1;
-  min-width: 330px;
-  padding: 22px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  padding: 24px;
   background: var(--light-bg);
-  transition: var(--trans-fast);
+  overflow-y: auto;
+  transition: var(--trans);
 }
+
 [data-theme="dark"] .main {
   background: var(--dark-bg);
 }
-h1 { font: var(--font-head); margin: 0 0 1rem;}
-form label { font-weight: 600; margin-bottom: 6px; display:block;}
-.form-group { margin-bottom: 1.2em; }
-input, select {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 4px; padding:7px 8px;
-  width: 100%; font-family: inherit; font-size: 1rem;
-  box-sizing: border-box;
-  transition: var(--trans-fast);
-}
-[data-theme="dark"] input, [data-theme="dark"] select {
-  background: #23272c;
-  color: #fff; border:1px solid #39414a;
-}
-input[type="checkbox"], input[type="radio"], input[type="color"] {
-  width: auto !important; margin-right: 7px;
-}
-input[type="radio"] { vertical-align:-1.5px;}
-.input-row { display: flex; align-items: center; gap:10px;}
-.small { font-size: 0.94em; margin-left: 0.2em;}
-button {
-  border:none; border-radius:4px;
-  background:#4c6ef5;color:#fff; font: var(--font-head); padding:10px 18px; margin: 5px 0; cursor:pointer;
-  box-shadow:0 1px 3px #22334418; transition: all 0.13s;
-}
-button:hover { background:#364fc7; }
-.btn-group { display:flex; gap:7px; flex-wrap:wrap;}
-.card {
-  background: var(--light-card);
-  border-radius:8px;
-  box-shadow:0 2px 7px #22334419;
-  padding: 1.5rem 1rem 1rem;
-  margin-bottom:1.5em;
-  transition: var(--trans-fast);
-}
-[data-theme="dark"] .card{ background: var(--dark-card);}
-.card h2 { margin-top:0;}
-.warning, .successmsg {
-  padding: 9px 12px; margin-bottom: 1em; border-radius: 6px;
-  font-size: 1em;
-}
-.warning { background: #ffe1d4; color: #ad3933; border-left:4px solid #e03131;}
-.successmsg { background: #e4ffe9; color: #16814d; border-left:4px solid #2ba84a;}
 
-.sim-area {
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--primary);
+}
+
+.theme-toggle {
   background: var(--light-card);
-  border-radius: 10px;
-  box-shadow: 0 1px 7px #22334416;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: var(--trans);
+}
+
+.theme-toggle:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 1.8rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #4a5568;
+}
+
+[data-theme="dark"] .form-group label {
+  color: #cbd5e0;
+}
+
+/* Input Styles */
+.input-group {
+  position: relative;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--light-card);
+  font-size: 1rem;
+  transition: var(--trans);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.1);
+}
+
+[data-theme="dark"] .form-control {
+  background: var(--dark-card);
+  color: #f7fafc;
+  border-color: #4a5568;
+}
+
+/* Dropdown with Icons */
+.dropdown-group {
+  position: relative;
+}
+
+.dropdown-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dropdown-option {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 520px;
-  justify-content: flex-start;
-  padding: 1rem 0.7rem;
-  gap: 0.2rem;
-  position:relative;
+  padding: 16px 8px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--light-card);
+  cursor: pointer;
+  transition: var(--trans);
+  text-align: center;
 }
-[data-theme="dark"] .sim-area { background: var(--dark-card); }
-.sim-views {
-  display: flex; flex-wrap:wrap;
-  gap: 1.2em; justify-content:center;
-}
-.sim-svg-area {
-  min-width: 240px; min-height: 300px;
-  display:flex; flex:1; align-items:center; justify-content:center;
-  position:relative;
-  background:none;
-}
-.sim-controls {
-  display: flex; gap: 8px; margin: 6px 0 0;
-  align-items: center; flex-wrap: wrap;
-}
-.sim-controls button, .sim-controls label { font-size: 0.98rem; }
-.sim-controls select, .sim-controls input { width:auto;}
 
+.dropdown-option:hover {
+  border-color: var(--primary);
+  background: rgba(76, 110, 245, 0.05);
+}
+
+.dropdown-option.active {
+  border-color: var(--primary);
+  background: rgba(76, 110, 245, 0.1);
+}
+
+.dropdown-option .icon {
+  font-size: 1.8rem;
+  margin-bottom: 4px;
+}
+
+.dropdown-option .label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.dropdown-option .size {
+  font-size: 0.75rem;
+  color: #718096;
+  margin-top: 2px;
+}
+
+/* Custom Input Row */
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.input-row input {
+  flex: 1;
+  min-width: 60px;
+}
+
+.input-row .unit {
+  color: #718096;
+  font-weight: 500;
+}
+
+/* Checkbox & Radio */
+.checkbox-group, .radio-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.checkbox-group input, .radio-group input {
+  width: auto;
+}
+
+/* Box Preview */
+.box-preview {
+  width: 100%;
+  height: 120px;
+  background: linear-gradient(45deg, #f7fafc 25%, transparent 25%),
+              linear-gradient(-45deg, #f7fafc 25%, transparent 25%),
+              linear-gradient(45deg, transparent 75%, #f7fafc 75%),
+              linear-gradient(-45deg, transparent 75%, #f7fafc 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.box-3d {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: var(--trans);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--trans);
+  text-decoration: none;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn-secondary {
+  background: var(--secondary);
+  color: white;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: #4a5568;
+}
+
+[data-theme="dark"] .btn-outline {
+  color: #cbd5e0;
+  border-color: #4a5568;
+}
+
+.btn-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+
+/* Cards */
+.card {
+  background: var(--light-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-bottom: 24px;
+  transition: var(--trans);
+}
+
+[data-theme="dark"] .card {
+  background: var(--dark-card);
+}
+
+.card h2 {
+  margin: 0 0 16px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* Results */
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.stat-card {
+  background: var(--light-card);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  transition: var(--trans);
+}
+
+[data-theme="dark"] .stat-card {
+  background: var(--dark-card);
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  display: block;
+}
+
+.stat-label {
+  color: #718096;
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
+/* Simulation Area */
+.sim-container {
+  background: var(--light-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  transition: var(--trans);
+}
+
+[data-theme="dark"] .sim-container {
+  background: var(--dark-card);
+}
+
+.sim-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.view-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  background: var(--light-card);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--trans);
+  font-size: 0.9rem;
+}
+
+.view-btn:hover {
+  border-color: var(--primary);
+}
+
+.view-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+[data-theme="dark"] .view-btn {
+  background: var(--dark-card);
+  color: #cbd5e0;
+  border-color: #4a5568;
+}
+
+.sim-viewport {
+  width: 100%;
+  min-height: 400px;
+  border-radius: var(--radius);
+  background: linear-gradient(45deg, #f7fafc 25%, transparent 25%),
+              linear-gradient(-45deg, #f7fafc 25%, transparent 25%);
+  background-size: 20px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .sim-viewport {
+  background: linear-gradient(45deg, #2d3748 25%, transparent 25%),
+              linear-gradient(-45deg, #2d3748 25%, transparent 25%);
+}
+
+/* SVG Styles */
 .dimline {
-  stroke: var(--dimline); stroke-width:1.4;
+  stroke: var(--dimline);
+  stroke-width: 1.5;
   marker-end: url(#arrowend);
 }
-.dimlabel { fill: var(--dimline); font-size: 11px; font-weight:600;}
-.viewbtn.active { background:#4c6ef5 !important; color:#fff;}
-@media (max-width: 700px) {
-  .main{ padding: 7px 2px; }
-  .card{ padding: 0.9rem 0.4rem;}
-  .sim-svg-area{ min-width:unset; min-height:200px;}
+
+.dimlabel {
+  fill: var(--dimline);
+  font-size: 12px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+/* Alerts */
+.alert {
+  padding: 16px;
+  border-radius: var(--radius);
+  margin: 16px 0;
+  border-left: 4px solid;
+}
+
+.alert-warning {
+  background: #fef5e7;
+  color: #d69e2e;
+  border-left-color: #d69e2e;
+}
+
+.alert-success {
+  background: #f0fff4;
+  color: #38a169;
+  border-left-color: #38a169;
+}
+
+[data-theme="dark"] .alert-warning {
+  background: rgba(214, 158, 46, 0.1);
+  color: #faf089;
+}
+
+[data-theme="dark"] .alert-success {
+  background: rgba(56, 161, 105, 0.1);
+  color: #9ae6b4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar { padding: 16px; }
+  .main { padding: 16px; }
+  .dropdown-options { grid-template-columns: repeat(2, 1fr); }
+  .results-grid { grid-template-columns: 1fr; }
+  .sim-controls { justify-content: flex-start; }
+  .btn-group { justify-content: center; }
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 24px;
+  color: #718096;
+  font-size: 0.9rem;
+  border-top: 1px solid var(--border);
+  margin-top: 2rem;
+}
+
+/* Loading Animation */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
   </style>
 </head>
-<body>
+<body data-theme="light">
+
 <div class="container">
-  <aside class="sidebar" id="sidebar">
-    <h1>Pallet &amp; Truck Box Simulator</h1>
-    <form id="configForm" autocomplete="off">
-      <!-- Model/Part -->
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="header">
+      <h1>📦 Box Simulator</h1>
+      <button class="theme-toggle" id="themeBtn">🌙</button>
+    </div>
+
+    <form id="calculatorForm">
+      <!-- Model & Part Names -->
       <div class="form-group">
-        <label>ชื่อโมเดล <span class="small">(ไม่บังคับ)</span></label>
-        <input type="text" id="modelName" placeholder="Model Name">
+        <label>Model Name (ไม่บังคับ)</label>
+        <input type="text" class="form-control" id="modelName" placeholder="เช่น ABC-001">
       </div>
+
       <div class="form-group">
-        <label>ชื่อชิ้นส่วน <span class="small">(ไม่บังคับ)</span></label>
-        <input type="text" id="partName" placeholder="Part Name">
+        <label>Part Name (ไม่บังคับ)</label>
+        <input type="text" class="form-control" id="partName" placeholder="เช่น Main Housing">
       </div>
-      <!-- Pallet -->
+
+      <!-- Pallet Selection -->
       <div class="form-group">
-        <label>ขนาดพาเลท</label>
-        <div class="input-row">
-          <input type="radio" name="palletStd" id="palletUS" value="us"> <label for="palletUS" class="small">US 1000x1200</label>
-          <input type="radio" name="palletStd" id="palletJP" value="jp"> <label for="palletJP" class="small">JP 1100x1100</label>
-          <input type="radio" name="palletStd" id="palletEU" value="eu"> <label for="palletEU" class="small">EU 800x1200</label>
-          <input type="radio" name="palletStd" id="palletCustom" value="custom"> <label for="palletCustom" class="small">Custom</label>
+        <label>เลือกขนาดพาเลท</label>
+        <div class="dropdown-options" id="palletOptions">
+          <div class="dropdown-option" data-value="us">
+            <div class="icon">🇺🇸</div>
+            <div class="label">US Standard</div>
+            <div class="size">1000×1200mm</div>
+          </div>
+          <div class="dropdown-option active" data-value="eu">
+            <div class="icon">🇪🇺</div>
+            <div class="label">EU Standard</div>
+            <div class="size">800×1200mm</div>
+          </div>
+          <div class="dropdown-option" data-value="jp">
+            <div class="icon">🇯🇵</div>
+            <div class="label">JP Standard</div>
+            <div class="size">1100×1100mm</div>
+          </div>
+          <div class="dropdown-option" data-value="custom">
+            <div class="icon">⚙️</div>
+            <div class="label">Custom</div>
+            <div class="size">กำหนดเอง</div>
+          </div>
         </div>
-        <div class="input-row">
-          <input type="number" id="palletWidth" min="100" max="2000" step="1" style="width:64px;" required> x
-          <input type="number" id="palletLength" min="100" max="2000" step="1" style="width:64px;" required>
-          <span class="unitlbl">mm</span>
+        
+        <div class="input-row" id="customPalletRow" style="display:none;">
+          <input type="number" class="form-control" id="palletWidth" placeholder="Width" min="100" max="2000">
+          <span>×</span>
+          <input type="number" class="form-control" id="palletLength" placeholder="Length" min="100" max="2000">
+          <span class="unit">mm</span>
         </div>
+
         <div class="input-row">
-          <label class="small">ฐานสูง</label>
-          <input type="number" id="palletBaseHeight" min="50" max="400" step="1" style="width:64px;" required>
-          <span class="unitlbl">mm</span>
-          <label class="small">Tare (kg)</label>
-          <input type="number" id="palletTareWeight" min="1" max="100" step="0.1" style="width:64px;" required>
+          <label style="margin:0;">ความสูงฐาน:</label>
+          <input type="number" class="form-control" id="palletHeight" value="144" min="50" max="400" style="width:80px;">
+          <span class="unit">mm</span>
+          <label style="margin:0;">น้ำหนักพาเลท:</label>
+          <input type="number" class="form-control" id="palletWeight" value="20" min="1" max="100" step="0.1" style="width:80px;">
+          <span class="unit">kg</span>
         </div>
       </div>
-      <!-- Box Inputs -->
+
+      <!-- Box Dimensions -->
       <div class="form-group">
-        <label>ขนาดกล่อง &amp; น้ำหนัก</label>
+        <label>ขนาดกล่อง</label>
         <div class="input-row">
-          <input type="number" id="boxWidth" min="30" max="1500" required style="width:58px;"> x
-          <input type="number" id="boxLength" min="30" max="1500" required style="width:58px;"> x
-          <input type="number" id="boxHeight" min="10" max="1500" required style="width:58px;">
-          <span class="unitlbl">mm</span>
+          <input type="number" class="form-control" id="boxWidth" value="200" min="10" max="1500" placeholder="กว้าง">
+          <span>×</span>
+          <input type="number" class="form-control" id="boxLength" value="300" min="10" max="1500" placeholder="ยาว">
+          <span>×</span>
+          <input type="number" class="form-control" id="boxHeight" value="200" min="10" max="1500" placeholder="สูง">
+          <span class="unit">mm</span>
         </div>
+        
         <div class="input-row">
-          <label class="small">ต่อใบ</label>
-          <input type="number" id="boxWeight" min="0" max="200" step="0.1" style="width:70px;" placeholder="0">
-          <span class="small">kg</span>
+          <label style="margin:0;">น้ำหนัก/กล่อง:</label>
+          <input type="number" class="form-control" id="boxWeight" value="2" min="0" max="200" step="0.1" style="width:80px;">
+          <span class="unit">kg</span>
         </div>
+
+        <!-- Box Preview -->
+        <div class="box-preview" id="boxPreview">
+          <div class="box-3d" id="box3d"></div>
+        </div>
+
+        <!-- Box Color -->
         <div class="input-row">
-          <label class="small">สี</label>
-          <input type="color" id="boxColor" value="#f59f00" title="เลือกสีกล่อง">
-          <input type="checkbox" id="boxKraft"><label for="boxKraft" class="small">สีกระดาษ/คราฟท์</label>
+          <label style="margin:0;">สีกล่อง:</label>
+          <input type="color" id="boxColor" value="#f59f00" style="width:50px;">
+          <div class="checkbox-group">
+            <input type="checkbox" id="kraftBox">
+            <label for="kraftBox">สีกระดาษคราฟท์</label>
+          </div>
         </div>
+
+        <!-- Color Presets -->
         <div class="form-group">
-          <label>ชุดสี</label>
-          <select id="colorPreset">
+          <label>ชุดสีสำเร็จรูป</label>
+          <select class="form-control" id="colorPreset">
             <option value="slate">Slate Blue</option>
             <option value="teal">Teal Gray</option>
-            <option value="amber">Amber Charcoal</option>
+            <option value="amber" selected>Amber Charcoal</option>
             <option value="indigo">Indigo Silver</option>
             <option value="forest">Forest Sand</option>
             <option value="crimson">Crimson Steel</option>
@@ -241,443 +637,921 @@ button:hover { background:#364fc7; }
           </select>
         </div>
       </div>
-      <!-- Box stacking options -->
+
+      <!-- Stacking Options -->
       <div class="form-group">
-        <label>การวางกล่องบนพาเลท</label>
-        <div class="input-row">
-          <input type="radio" name="stackCond" id="stackMaxH" value="maxh" checked><label for="stackMaxH" class="small">Max Height</label>
-          <input type="number" id="maxHeight" min="200" max="2500" step="1" value="1400" style="width:65px;">
-          <span class="unitlbl">mm</span>
+        <label>เงื่อนไขการซ้อนกล่อง</label>
+        <div class="radio-group">
+          <input type="radio" name="stackType" id="maxHeightMode" value="height" checked>
+          <label for="maxHeightMode">ความสูงสูงสุด</label>
+          <input type="number" class="form-control" id="maxHeight" value="1400" min="200" max="3000" style="width:100px;">
+          <span class="unit">mm</span>
         </div>
-        <div class="input-row">
-          <input type="radio" name="stackCond" id="stackLayer" value="layer"><label for="stackLayer" class="small">จำนวนชั้น</label>
-          <input type="number" id="boxLayers" min="1" max="30" step="1" value="1" style="width:48px;">
-          <span class="small">ชั้น</span>
+        
+        <div class="radio-group">
+          <input type="radio" name="stackType" id="layerMode" value="layers">
+          <label for="layerMode">จำนวนชั้น</label>
+          <input type="number" class="form-control" id="boxLayers" value="3" min="1" max="20" style="width:80px;">
+          <span class="unit">ชั้น</span>
         </div>
-        <div class="input-row">
+
+        <div class="checkbox-group">
           <input type="checkbox" id="allowBoxRotate" checked>
-          <label for="allowBoxRotate" class="small">อนุญาตหมุนกล่อง 90°</label>
+          <label for="allowBoxRotate">อนุญาตให้หมุนกล่อง 90°</label>
         </div>
       </div>
-      <!-- Truck options -->
+
+      <!-- Truck Selection -->
       <div class="form-group">
-        <label>ขนาดรถบรรทุก</label>
-        <div class="input-row">
-          <input type="radio" name="truckStd" id="truckSmall" value="small"><label for="truckSmall" class="small">เล็ก</label>
-          <input type="radio" name="truckStd" id="truckMed" value="med"><label for="truckMed" class="small">กลาง</label>
-          <input type="radio" name="truckStd" id="truckLarge" value="large"><label for="truckLarge" class="small">ใหญ่</label>
-          <input type="radio" name="truckStd" id="truckCustom" value="custom"><label for="truckCustom" class="small">Custom</label>
+        <label>เลือกขนาดรถบรรทุก</label>
+        <div class="dropdown-options" id="truckOptions">
+          <div class="dropdown-option" data-value="small">
+            <div class="icon">🚐</div>
+            <div class="label">รถเล็ก</div>
+            <div class="size">2.3×5.3×2.3m</div>
+          </div>
+          <div class="dropdown-option active" data-value="medium">
+            <div class="icon">🚚</div>
+            <div class="label">รถกลาง</div>
+            <div class="size">2.3×6.3×2.3m</div>
+          </div>
+          <div class="dropdown-option" data-value="large">
+            <div class="icon">🚛</div>
+            <div class="label">รถใหญ่</div>
+            <div class="size">2.3×7.2×2.3m</div>
+          </div>
+          <div class="dropdown-option" data-value="custom">
+            <div class="icon">⚙️</div>
+            <div class="label">Custom</div>
+            <div class="size">กำหนดเอง</div>
+          </div>
         </div>
-        <div class="input-row">
-          <input type="number" id="truckWidth" min="1000" max="3500" step="1" style="width:60px;"> x
-          <input type="number" id="truckLength" min="2000" max="20000" step="1" style="width:70px;"> x
-          <input type="number" id="truckHeight" min="1000" max="5000" step="1" style="width:60px;">
-          <span class="unitlbl">mm</span>
+
+        <div class="input-row" id="customTruckRow" style="display:none;">
+          <input type="number" class="form-control" id="truckWidth" placeholder="กว้าง" min="1500" max="3500">
+          <span>×</span>
+          <input type="number" class="form-control" id="truckLength" placeholder="ยาว" min="3000" max="15000">
+          <span>×</span>
+          <input type="number" class="form-control" id="truckHeight" placeholder="สูง" min="1500" max="4000">
+          <span class="unit">mm</span>
         </div>
-        <div class="input-row">
+
+        <div class="checkbox-group">
           <input type="checkbox" id="allowPalletStack" checked>
-          <label for="allowPalletStack" class="small">วางพาเลทซ้อนกัน</label>
+          <label for="allowPalletStack">อนุญาตให้ซ้อนพาเลท</label>
         </div>
+
         <div class="input-row">
-          <label class="small">Max ขั้น</label>
-          <input type="number" id="truckMaxPalletLayers" min="1" max="10" value="2" style="width: 50px;">
+          <label style="margin:0;">จำนวนชั้นพาเลทสูงสุด:</label>
+          <input type="number" class="form-control" id="maxPalletLayers" value="2" min="1" max="5" style="width:80px;">
         </div>
-        <div class="input-row">
+
+        <div class="checkbox-group">
           <input type="checkbox" id="allowPalletRotate" checked>
-          <label for="allowPalletRotate" class="small">หมุนพาเลท 90° บนรถได้</label>
+          <label for="allowPalletRotate">อนุญาตให้หมุนพาเลท 90°</label>
         </div>
       </div>
-      <!-- Others -->
+
+      <!-- Display Units -->
       <div class="form-group">
-        <label>หน่วยแสดงผล</label>
-        <div class="input-row">
-          <input type="radio" name="unit" id="unitMM" value="mm" checked><label for="unitMM">mm</label>
-          <input type="radio" name="unit" id="unitCM" value="cm"><label for="unitCM">cm</label>
+        <label>หน่วยที่แสดง</label>
+        <div class="radio-group">
+          <input type="radio" name="displayUnit" id="unitMM" value="mm" checked>
+          <label for="unitMM">มิลลิเมตร (mm)</label>
+          <input type="radio" name="displayUnit" id="unitCM" value="cm">
+          <label for="unitCM">เซนติเมตร (cm)</label>
         </div>
       </div>
-      <!-- Buttons -->
+
+      <!-- Action Buttons -->
       <div class="btn-group">
-        <button type="button" id="calcBtn">Calculate &amp; Render</button>
-        <button type="reset" id="resetBtn" style="background:#868e96;padding:8px 14px;">รีเซ็ตค่าเริ่มต้น</button>
+        <button type="button" class="btn btn-primary" id="calculateBtn">
+          🧮 คำนวณและแสดงผล
+        </button>
+        <button type="button" class="btn btn-outline" id="resetBtn">
+          🔄 รีเซ็ต
+        </button>
       </div>
-      <div class="btn-group">
-        <label class="small">ธีม:</label>
-        <button type="button" id="themeToggle" style="background:#fff;color:#4c6ef5;border:1px solid #4c6ef5;width:38px;background:#c5d0fa;">&#9788;</button>
-      </div>
+
     </form>
-    <!-- END form -->
   </aside>
+
+  <!-- Main Content -->
   <main class="main">
-    <div id="outputArea"></div>
-    <div class="sim-area">
-      <div class="sim-controls">
-        <label class="small">มุมมอง:</label>
-        <button class="viewbtn" data-v="top">Top</button>
-        <button class="viewbtn" data-v="front">Front</button>
-        <button class="viewbtn" data-v="side">Side</button>
-        <button class="viewbtn" data-v="iso">Iso</button>
-        <label class="small">Zoom:</label>
-        <input id="zoomSlider" type="range" min="0.5" max="2.5" value="1" step="0.1" style="width:70px;">
-        <button id="exportSvgBtn" title="Export SVG" style="background:#fff;color:#4c6ef5;border:1px solid #4c6ef5;"><b>SVG</b></button>
-        <button id="exportJsonBtn" title="Export JSON" style="background: #20c997;">JSON</button>
+    
+    <!-- Results Section -->
+    <div id="resultsSection" style="display:none;">
+      <div class="card">
+        <h2>📊 ผลลัพธ์การคำนวณ</h2>
+        <div id="modelPartInfo"></div>
+        
+        <div class="results-grid">
+          <div class="stat-card">
+            <span class="stat-value" id="boxesPerLayer">-</span>
+            <div class="stat-label">กล่อง/ชั้น</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="totalLayers">-</span>
+            <div class="stat-label">จำนวนชั้น</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="boxesPerPallet">-</span>
+            <div class="stat-label">กล่อง/พาเลท</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="palletTotalWeight">-</span>
+            <div class="stat-label">น้ำหนักพาเลท (kg)</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="palletsPerTruck">-</span>
+            <div class="stat-label">พาเลท/รถ</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="totalTruckWeight">-</span>
+            <div class="stat-label">น้ำหนักรวม (kg)</div>
+          </div>
+        </div>
+
+        <div id="additionalInfo" class="alert alert-success" style="display:none;"></div>
       </div>
-      <div class="sim-svg-area">
-        <svg id="palletSvg" width="460" height="320" 
-          style="background:none; max-width:98%; height:auto;display:block;">
-          <defs><marker id="arrowend" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2095ff"></polygon></marker></defs>
+    </div>
+
+    <!-- Simulation Section -->
+    <div class="sim-container">
+      <h2>🎯 Simulation 3D</h2>
+      
+      <div class="sim-controls">
+        <div class="view-btn active" data-view="top">📋 Top View</div>
+        <div class="view-btn" data-view="front">📏 Front View</div>
+        <div class="view-btn" data-view="side">📐 Side View</div>
+        <div class="view-btn" data-view="iso">🎲 Isometric</div>
+        
+        <label style="margin-left:20px;">🔍 Zoom:</label>
+        <input type="range" id="zoomSlider" min="0.5" max="2.5" step="0.1" value="1" style="width:100px;">
+        
+        <button class="btn btn-outline" id="exportSVG">📁 Export SVG</button>
+        <button class="btn btn-secondary" id="exportJSON">💾 Export JSON</button>
+      </div>
+
+      <div class="sim-viewport">
+        <svg id="simulationSVG" width="800" height="500" style="max-width:100%; height:auto;">
+          <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#2095ff" />
+            </marker>
+          </defs>
+          <text x="400" y="250" text-anchor="middle" fill="#718096" font-size="18">
+            กดปุ่ม "คำนวณและแสดงผล" เพื่อดู Simulation
+          </text>
         </svg>
       </div>
-      <div id="simLabels" style="text-align:center;"></div>
+
+      <div id="simInfo" style="text-align:center; margin-top:16px; color:#718096;"></div>
     </div>
+
   </main>
 </div>
+
+<div class="footer">
+  © 2025 Bunnamchai.bu - Box Simulator for Pallet & Truck Loading
+</div>
+
 <script>
-// --------------------- Presets
-const PALET_STD = {
-  us: { width:1000, length:1200 },
-  jp: { width:1100, length:1100 },
-  eu: { width:800, length:1200 }
+// ========== CONSTANTS ==========
+const PALLET_PRESETS = {
+  us: { width: 1000, length: 1200, name: "US Standard" },
+  eu: { width: 800, length: 1200, name: "EU Standard" },
+  jp: { width: 1100, length: 1100, name: "JP Standard" }
 };
-const TRUCK_STD = {
-  small: { width:2300, length:5300, height:2300 },
-  med:   { width:2300, length:6300, height:2300 },
-  large: { width:2300, length:7200, height:2300 }
+
+const TRUCK_PRESETS = {
+  small: { width: 2300, length: 5300, height: 2300, name: "รถเล็ก" },
+  medium: { width: 2300, length: 6300, height: 2300, name: "รถกลาง" },
+  large: { width: 2300, length: 7200, height: 2300, name: "รถใหญ่" }
 };
+
 const COLOR_PRESETS = {
-  slate: { box:"#4C6EF5", pallet:"#CED4DA", truck:"#ADB5BD", stroke:"#2B2D42", bglt:"#F8F9FA", bgdk:"#0B0C10" },
-  teal: { box:"#0CA678", pallet:"#DEE2E6", truck:"#868E96", stroke:"#343A40", bglt:"#FFF", bgdk:"#0E1116" },
-  amber: { box:"#F59F00", pallet:"#E9ECEF", truck:"#495057", stroke:"#212529", bglt:"#FAFAFB", bgdk:"#111217" },
-  indigo: { box:"#5C7CFA", pallet:"#E5E7EB", truck:"#9CA3AF", stroke:"#111827", bglt:"#F9FAFB", bgdk:"#0A0B0E" },
-  forest: { box:"#2B8A3E", pallet:"#EAD7BD", truck:"#A68A64", stroke:"#2D2A26", bglt:"#FFFCF7", bgdk:"#14110F" },
-  crimson: { box:"#E03131", pallet:"#DDE2E5", truck:"#6C757D", stroke:"#1F2328", bglt:"#FFF", bgdk:"#0D1117" },
-  royal: { box:"#7950F2", pallet:"#F1F3F5", truck:"#868E96", stroke:"#1B1F24", bglt:"#F8FAFC", bgdk:"#0B0E14" },
-  cyan: { box:"#15AABF", pallet:"#DDE2E5", truck:"#5C677D", stroke:"#2E3440", bglt:"#F6F7F9", bgdk:"#0F1115" }
+  slate: { box: "#4C6EF5", pallet: "#CED4DA", truck: "#ADB5BD", stroke: "#2B2D42" },
+  teal: { box: "#0CA678", pallet: "#DEE2E6", truck: "#868E96", stroke: "#343A40" },
+  amber: { box: "#F59F00", pallet: "#E9ECEF", truck: "#495057", stroke: "#212529" },
+  indigo: { box: "#5C7CFA", pallet: "#E5E7EB", truck: "#9CA3AF", stroke: "#111827" },
+  forest: { box: "#2B8A3E", pallet: "#EAD7BD", truck: "#A68A64", stroke: "#2D2A26" },
+  crimson: { box: "#E03131", pallet: "#DDE2E5", truck: "#6C757D", stroke: "#1F2328" },
+  royal: { box: "#7950F2", pallet: "#F1F3F5", truck: "#868E96", stroke: "#1B1F24" },
+  cyan: { box: "#15AABF", pallet: "#DDE2E5", truck: "#5C677D", stroke: "#2E3440" }
 };
-function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
-function mm(v){ return v; }
-function cm(v){ return v/10; }
-function round2(x){ return Math.round(x*100)/100; }
 
-// ---- Theme ----
-function setTheme(isDark) {
-  document.documentElement.setAttribute("data-theme", isDark?"dark":"light");
-  document.getElementById("themeToggle").innerHTML = isDark?"&#9790;":"&#9788;";
+// ========== GLOBAL VARIABLES ==========
+let currentView = 'top';
+let calculationResults = null;
+
+// ========== UTILITY FUNCTIONS ==========
+function formatNumber(num, decimals = 0) {
+  return Number(num).toLocaleString('th-TH', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
 }
-document.getElementById("themeToggle").onclick = function() {
-  const dark = document.documentElement.getAttribute('data-theme')!=="dark";
-  setTheme(dark);
-  renderAll();
+
+function formatUnit(value, unit) {
+  if (unit === 'cm') {
+    return formatNumber(value / 10, 1) + ' cm';
+  }
+  return formatNumber(value) + ' mm';
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+// ========== DOM ELEMENTS ==========
+const elements = {
+  themeBtn: document.getElementById('themeBtn'),
+  calculateBtn: document.getElementById('calculateBtn'),
+  resetBtn: document.getElementById('resetBtn'),
+  palletOptions: document.getElementById('palletOptions'),
+  truckOptions: document.getElementById('truckOptions'),
+  customPalletRow: document.getElementById('customPalletRow'),
+  customTruckRow: document.getElementById('customTruckRow'),
+  resultsSection: document.getElementById('resultsSection'),
+  simulationSVG: document.getElementById('simulationSVG'),
+  zoomSlider: document.getElementById('zoomSlider'),
+  exportSVG: document.getElementById('exportSVG'),
+  exportJSON: document.getElementById('exportJSON')
 };
-// ---- Color Preset
-function applyPreset() {
-  const p = COLOR_PRESETS[document.getElementById("colorPreset").value];
-  document.getElementById("boxColor").value = p.box;
-}
 
-// ---- Reset Default
-function setDefaults() {
-  // Pallet EU
-  document.getElementById('palletEU').checked = true;
-  document.getElementById("palletWidth").value = 800;
-  document.getElementById("palletLength").value = 1200;
-  document.getElementById("palletBaseHeight").value = 144;
-  document.getElementById("palletTareWeight").value = 20;
-  // Box 200x300x200 mm, 2 kg
-  document.getElementById("boxWidth").value = 200;
-  document.getElementById("boxLength").value = 300;
-  document.getElementById("boxHeight").value = 200;
-  document.getElementById("boxWeight").value = 2;
-  document.getElementById("boxColor").value = "#f59f00";
-  document.getElementById("boxKraft").checked = false;
-  document.getElementById("colorPreset").value = "amber";
-  // Stack Max Height
-  document.getElementById("stackMaxH").checked = true;
-  document.getElementById("maxHeight").value = 1200;
-  document.getElementById("boxLayers").value = 1;
-  document.getElementById("allowBoxRotate").checked = true;
-  // Truck กลาง
-  document.getElementById("truckMed").checked = true;
-  document.getElementById("truckWidth").value = 2300;
-  document.getElementById("truckLength").value = 6300;
-  document.getElementById("truckHeight").value = 2300;
-  document.getElementById("allowPalletStack").checked = true;
-  document.getElementById("truckMaxPalletLayers").value = 2;
-  document.getElementById("allowPalletRotate").checked = true;
-  // Units mm
-  document.getElementById("unitMM").checked = true;
-  document.getElementById("modelName").value = "";
-  document.getElementById("partName").value = "";
-  setTimeout(applyPreset,24);
-}
-document.getElementById("resetBtn").onclick = setDefaults;
-document.getElementById("colorPreset").onchange = function(){applyPreset(); renderAll();}
-setTheme(false); setDefaults();
+// ========== EVENT LISTENERS ==========
 
-// ---- Form Handlers - sync Pallet/Truck selection to input ----
-const palletRadios = document.querySelectorAll("input[name='palletStd']");
-palletRadios.forEach(r=>{
-  r.onchange = function(){
-    const k = r.value; if(k in PALET_STD){
-      const p = PALET_STD[k];
-      document.getElementById("palletWidth").value = p.width;
-      document.getElementById("palletLength").value = p.length;
+// Theme Toggle
+elements.themeBtn.addEventListener('click', () => {
+  const currentTheme = document.body.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.body.setAttribute('data-theme', newTheme);
+  elements.themeBtn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+  if (calculationResults) updateSimulation();
+});
+
+// Pallet Selection
+elements.palletOptions.addEventListener('click', (e) => {
+  const option = e.target.closest('.dropdown-option');
+  if (!option) return;
+
+  // Update active state
+  elements.palletOptions.querySelectorAll('.dropdown-option').forEach(opt => 
+    opt.classList.remove('active'));
+  option.classList.add('active');
+
+  const value = option.getAttribute('data-value');
+  if (value === 'custom') {
+    elements.customPalletRow.style.display = 'flex';
+  } else {
+    elements.customPalletRow.style.display = 'none';
+    const preset = PALLET_PRESETS[value];
+    if (preset) {
+      document.getElementById('palletWidth').value = preset.width;
+      document.getElementById('palletLength').value = preset.length;
+    }
+  }
+  updateBoxPreview();
+});
+
+// Truck Selection
+elements.truckOptions.addEventListener('click', (e) => {
+  const option = e.target.closest('.dropdown-option');
+  if (!option) return;
+
+  // Update active state
+  elements.truckOptions.querySelectorAll('.dropdown-option').forEach(opt => 
+    opt.classList.remove('active'));
+  option.classList.add('active');
+
+  const value = option.getAttribute('data-value');
+  if (value === 'custom') {
+    elements.customTruckRow.style.display = 'flex';
+  } else {
+    elements.customTruckRow.style.display = 'none';
+    const preset = TRUCK_PRESETS[value];
+    if (preset) {
+      document.getElementById('truckWidth').value = preset.width;
+      document.getElementById('truckLength').value = preset.length;
+      document.getElementById('truckHeight').value = preset.height;
     }
   }
 });
-const truckRadios = document.querySelectorAll("input[name='truckStd']");
-truckRadios.forEach(r=>{
-  r.onchange = function(){
-    const k = r.value; if(k in TRUCK_STD){
-      const p = TRUCK_STD[k];
-      document.getElementById("truckWidth").value = p.width;
-      document.getElementById("truckLength").value = p.length;
-      document.getElementById("truckHeight").value = p.height;
-    }
-  }
+
+// View Buttons
+document.querySelectorAll('.view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentView = btn.getAttribute('data-view');
+    if (calculationResults) updateSimulation();
+  });
 });
-// ---- Unit Toggle mm/cm ----
-const unitRadios = document.querySelectorAll("input[name='unit']");
-unitRadios.forEach(r=>r.onchange=renderAll);
 
-// ---- Real-time validation ----
-const inputs = document.querySelectorAll("input,select");
-inputs.forEach(i=>i.oninput=renderAll);
+// Box dimension inputs - update preview in real-time
+['boxWidth', 'boxLength', 'boxHeight', 'boxColor'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateBoxPreview);
+});
 
-// ---- Calculate & Render
-document.getElementById("calcBtn").onclick = function(){ renderAll(); };
-function renderAll(){
-  // get form
-  const F=parseInputs();
-  const warn = validateInputs(F);
-  if(warn.length){ setReport(warn.map(x=>`<div class="warning">${x}</div>`).join('')); clearSim(); return;}
-  // computing
-  const palletResults = computePallet(F);
-  const truckResults = computeTruck(F, palletResults);
-  setReport(renderReport(F, palletResults, truckResults));
-  renderSim(F, palletResults, truckResults);
+// Color preset change
+document.getElementById('colorPreset').addEventListener('change', (e) => {
+  const preset = COLOR_PRESETS[e.target.value];
+  document.getElementById('boxColor').value = preset.box;
+  updateBoxPreview();
+});
+
+// Kraft checkbox
+document.getElementById('kraftBox').addEventListener('change', updateBoxPreview);
+
+// Zoom slider
+elements.zoomSlider.addEventListener('input', () => {
+  if (calculationResults) updateSimulation();
+});
+
+// Calculate button
+elements.calculateBtn.addEventListener('click', calculate);
+
+// Reset button
+elements.resetBtn.addEventListener('click', resetForm);
+
+// Export buttons
+elements.exportSVG.addEventListener('click', exportSVG);
+elements.exportJSON.addEventListener('click', exportJSON);
+
+// ========== BOX PREVIEW FUNCTION ==========
+function updateBoxPreview() {
+  const width = parseInt(document.getElementById('boxWidth').value) || 200;
+  const length = parseInt(document.getElementById('boxLength').value) || 300;
+  const height = parseInt(document.getElementById('boxHeight').value) || 200;
+  const color = document.getElementById('kraftBox').checked ? '#b08e62' : document.getElementById('boxColor').value;
+  
+  const maxDim = Math.max(width, length, height);
+  const scale = 80 / maxDim;
+  
+  const w = width * scale;
+  const l = length * scale;
+  const h = height * scale;
+  
+  const box3d = document.getElementById('box3d');
+  box3d.innerHTML = `
+    <svg width="120" height="100" style="filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));">
+      <!-- Isometric box -->
+      <polygon points="20,${80-h} ${20+w*0.7},${60-h} ${20+w*0.7+l*0.3},${60-h-l*0.3} ${20+l*0.3},${80-h-l*0.3}" 
+               fill="${color}" stroke="#333" stroke-width="1.5" opacity="0.9"/>
+      <polygon points="${20+w*0.7},${60-h} ${20+w*0.7},60 ${20+w*0.7+l*0.3},${60-l*0.3} ${20+w*0.7+l*0.3},${60-h-l*0.3}" 
+               fill="${color}" stroke="#333" stroke-width="1.5" opacity="0.7"/>
+      <polygon points="20,${80-h} ${20+w*0.7},${60-h} ${20+w*0.7},60 20,80" 
+               fill="${color}" stroke="#333" stroke-width="1.5" opacity="0.8"/>
+      <text x="60" y="95" text-anchor="middle" font-size="10" fill="#666">
+        ${width}×${length}×${height} mm
+      </text>
+    </svg>
+  `;
 }
-function clearSim(){
-  document.getElementById("simLabels").innerHTML="";
-  let svg = document.getElementById("palletSvg"); svg.innerHTML="";
-}
 
-// ---- Input Parsing ----
-function parseInputs() {
-  // Pallet
-  let pw = mm(parseInt(document.getElementById('palletWidth').value)||0),
-      pl = mm(parseInt(document.getElementById('palletLength').value)||0),
-      pb = mm(parseInt(document.getElementById('palletBaseHeight').value)||0),
-      ptw = parseFloat(document.getElementById('palletTareWeight').value)||0;
-  // Box
-  let bw = mm(parseInt(document.getElementById('boxWidth').value)||0),
-      bl = mm(parseInt(document.getElementById('boxLength').value)||0),
-      bh = mm(parseInt(document.getElementById('boxHeight').value)||0),
-      bwgt = parseFloat(document.getElementById('boxWeight').value)||0;
-  // Stack Cond
-  let stackType = document.getElementById('stackMaxH').checked?"maxh":"layer",
-      maxHeight = mm(parseInt(document.getElementById('maxHeight').value)||1400),
-      boxLayers = parseInt(document.getElementById('boxLayers').value)||1,
-      allowBoxRotate = document.getElementById('allowBoxRotate').checked;
-  // Truck
-  let tw = mm(parseInt(document.getElementById('truckWidth').value)||0),
-      tl = mm(parseInt(document.getElementById('truckLength').value)||0),
-      th = mm(parseInt(document.getElementById('truckHeight').value)||0),
-      allowPalletStack = document.getElementById('allowPalletStack').checked,
-      truckMaxPalletLayers = parseInt(document.getElementById('truckMaxPalletLayers').value)||1,
-      allowPalletRotate = document.getElementById('allowPalletRotate').checked;
-  // Units
-  let unit = document.getElementById('unitMM').checked?"mm":"cm";
-  // Color
-  let boxColor = document.getElementById('boxColor').value,
-      boxKraft = document.getElementById('boxKraft').checked,
-      colorPreset = document.getElementById('colorPreset').value;
-  // Name
-  let modelName = document.getElementById("modelName").value.trim(),
-      partName = document.getElementById("partName").value.trim();
+// ========== CALCULATION FUNCTIONS ==========
+function getFormData() {
+  // Get active pallet type
+  const activePallet = elements.palletOptions.querySelector('.dropdown-option.active');
+  const palletType = activePallet.getAttribute('data-value');
+  
+  let palletWidth, palletLength;
+  if (palletType === 'custom') {
+    palletWidth = parseInt(document.getElementById('palletWidth').value) || 800;
+    palletLength = parseInt(document.getElementById('palletLength').value) || 1200;
+  } else {
+    const preset = PALLET_PRESETS[palletType];
+    palletWidth = preset.width;
+    palletLength = preset.length;
+  }
+
+  // Get active truck type
+  const activeTruck = elements.truckOptions.querySelector('.dropdown-option.active');
+  const truckType = activeTruck.getAttribute('data-value');
+  
+  let truckWidth, truckLength, truckHeight;
+  if (truckType === 'custom') {
+    truckWidth = parseInt(document.getElementById('truckWidth').value) || 2300;
+    truckLength = parseInt(document.getElementById('truckLength').value) || 6300;
+    truckHeight = parseInt(document.getElementById('truckHeight').value) || 2300;
+  } else {
+    const preset = TRUCK_PRESETS[truckType];
+    truckWidth = preset.width;
+    truckLength = preset.length;
+    truckHeight = preset.height;
+  }
+
   return {
-    pw,pl,pb,ptw, bw,bl,bh,bwgt, stackType,maxHeight,boxLayers, allowBoxRotate,
-    tw,tl,th, allowPalletStack, truckMaxPalletLayers, allowPalletRotate,
-    unit, boxColor, boxKraft, colorPreset, modelName, partName
+    // Model info
+    modelName: document.getElementById('modelName').value.trim(),
+    partName: document.getElementById('partName').value.trim(),
+    
+    // Pallet
+    pallet: {
+      width: palletWidth,
+      length: palletLength,
+      height: parseInt(document.getElementById('palletHeight').value) || 144,
+      weight: parseFloat(document.getElementById('palletWeight').value) || 20,
+      type: palletType
+    },
+    
+    // Box
+    box: {
+      width: parseInt(document.getElementById('boxWidth').value) || 200,
+      length: parseInt(document.getElementById('boxLength').value) || 300,
+      height: parseInt(document.getElementById('boxHeight').value) || 200,
+      weight: parseFloat(document.getElementById('boxWeight').value) || 2,
+      color: document.getElementById('kraftBox').checked ? '#b08e62' : document.getElementById('boxColor').value
+    },
+    
+    // Stacking
+    stacking: {
+      type: document.querySelector('input[name="stackType"]:checked').value,
+      maxHeight: parseInt(document.getElementById('maxHeight').value) || 1400,
+      layers: parseInt(document.getElementById('boxLayers').value) || 3,
+      allowBoxRotate: document.getElementById('allowBoxRotate').checked
+    },
+    
+    // Truck
+    truck: {
+      width: truckWidth,
+      length: truckLength,
+      height: truckHeight,
+      type: truckType,
+      allowPalletStack: document.getElementById('allowPalletStack').checked,
+      maxPalletLayers: parseInt(document.getElementById('maxPalletLayers').value) || 2,
+      allowPalletRotate: document.getElementById('allowPalletRotate').checked
+    },
+    
+    // Display
+    displayUnit: document.querySelector('input[name="displayUnit"]:checked').value,
+    colorPreset: document.getElementById('colorPreset').value
   };
 }
-function validateInputs(F) {
-  let arr = [];
-  if(F.bw <=0 || F.bl<=0 || F.bh<=0) arr.push("กรุณากรอกขนาดกล่องให้ถูกต้อง");
-  if(F.pw <=0 || F.pl<=0) arr.push("กรุณากรอกขนาดพาเลทให้ถูกต้อง");
-  if(F.tw <=0 || F.tl<=0 || F.th<=0) arr.push("กรุณากรอกขนาดรถให้ถูกต้อง");
-  if((F.bw>F.pw && F.bl>F.pl) && (F.bl>F.pw && F.bw>F.pl)) arr.push("กล่องใหญ่กว่าพาเลทในทุกทิศทาง");
-  if(F.stackType=="maxh"&& F.maxHeight<F.pb+F.bh) arr.push("Max Height ต้องมากกว่าฐานพาเลท+สูงกล่อง");
-  if(F.stackType=="layer"&& F.boxLayers<=0) arr.push("จำนวนชั้นกล่องต้องมากกว่า 0");
-  return arr;
-}
-// ---- Pallet Calculation ----
-function computePallet(F){
-  // กล่องต่อชั้น
-  let nNoRotate = Math.floor(F.pw/F.bw) * Math.floor(F.pl/F.bl); // ไม่หมุน
-  let nRotate = Math.floor(F.pw/F.bl) * Math.floor(F.pl/F.bw); // หมุน
-  let orientation = "ไม่หมุน";
-  let boxesPerLayer = nNoRotate, boxLayerW=F.bw, boxLayerL=F.bl;
-  if(F.allowBoxRotate){
-    if(nRotate>nNoRotate){
-      boxesPerLayer = nRotate; orientation = "หมุน";
-      boxLayerW=F.bl; boxLayerL=F.bw;
-    }
-  }
-  // จำนวนชั้น (กล่อง)
-  let maxLayers = 1;
-  if(F.stackType==="maxh"){
-    maxLayers = Math.floor((F.maxHeight-F.pb)/F.bh); 
-    if(maxLayers<1) maxLayers = 0;
-  }
-  else maxLayers = F.boxLayers;
-  let boxesPerPallet = boxesPerLayer*maxLayers;
-  let palletWeight = F.ptw + (boxesPerPallet*F.bwgt);
-  let palletTotalHeight = F.pb + (maxLayers*F.bh);
-  return { boxesPerLayer, orientation, boxLayerW, boxLayerL, maxLayers,boxesPerPallet, palletWeight, palletTotalHeight };
-}
-// ---- Truck Calculation ----
-function computeTruck(F, P){
-  // พาเลทต่อชั้นบนรถ
-  let mNoRotate = Math.floor(F.tw/F.pw)*Math.floor(F.tl/F.pl);
-  let mRotate = Math.floor(F.tw/F.pl)*Math.floor(F.tl/F.pw);
-  let orientation = "ไม่หมุน";
-  let palletsPerLayer=mNoRotate, palletFitW=F.pw, palletFitL=F.pl;
-  if(F.allowPalletRotate){
-    if(mRotate>mNoRotate){
-      palletsPerLayer = mRotate; orientation="หมุน";
-      palletFitW=F.pl; palletFitL=F.pw;
-    }
-  }
-  // จำนวนชั้นพาเลท
-  let maxTruckLayers = F.allowPalletStack ?
-    Math.min(F.truckMaxPalletLayers, Math.floor(F.th/P.palletTotalHeight)) :
-    Math.min(1, Math.floor(F.th/P.palletTotalHeight));
-  let palletsOnTruck = palletsPerLayer*maxTruckLayers;
-  let totalTruckWeight = palletsOnTruck*P.palletWeight;
-  let heightLeft = F.th - (maxTruckLayers*P.palletTotalHeight);
-  return { palletsPerLayer, orientation, palletFitW,palletFitL,maxTruckLayers,palletsOnTruck,totalTruckWeight,heightLeft };
-}
-// ---- Rendering ----
-function setReport(html){ document.getElementById("outputArea").innerHTML=html; }
-function rUnit(v,u){ return u=="cm"?round2(cm(v))+" cm":v+" mm"; }
-function renderReport(F,P,T){
-  let info=`<div class="card"><h2>ผลลัพธ์</h2>`;
-  if(F.modelName) info+=`<div style="font-weight:700">Model: ${F.modelName}</div>`;
-  if(F.partName) info+=`<div style="font-weight:700">Part: ${F.partName}</div>`;
 
-  info+=`<ul>
-    <li><b>พาเลท:</b> กล่องต่อชั้น: ${P.boxesPerLayer} (แนว: ${P.orientation}), ชั้นทั้งหมด: ${P.maxLayers}, กล่องต่อพาเลท: ${P.boxesPerPallet}
-    <li>น้ำหนักพาเลท (kg): <b>${round2(P.palletWeight)}</b>, ความสูงพาเลทรวม: <b>${rUnit(P.palletTotalHeight,F.unit)}</b></li>
-    <li><b>รถบรรทุก:</b> พาเลทต่อชั้น: ${T.palletsPerLayer} (แนว: ${T.orientation}), ชั้นพาเลท: ${T.maxTruckLayers}, รวมพาเลท: ${T.palletsOnTruck}</li>
-    <li>น้ำหนักรวมบรรทุก (kg): <b>${round2(T.totalTruckWeight)}</b> &middot; เหลือพื้นที่สูง: ${rUnit(T.heightLeft,F.unit)}</li>
-  </ul></div>`;
-  return info;
-}
-// ---- Simulation SVGs ----
-let currentView="top";
-document.querySelectorAll(".viewbtn").forEach(btn=>{
-  btn.onclick = function(){
-    currentView = btn.getAttribute("data-v");
-    document.querySelectorAll(".viewbtn").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    renderAll();
+function validateInputs(data) {
+  const errors = [];
+  
+  if (data.box.width <= 0 || data.box.length <= 0 || data.box.height <= 0) {
+    errors.push('กรุณากรอกขนาดกล่องให้ถูกต้อง');
   }
+  
+  if (data.pallet.width <= 0 || data.pallet.length <= 0) {
+    errors.push('กรุณากรอกขนาดพาเลทให้ถูกต้อง');
+  }
+  
+  if (data.truck.width <= 0 || data.truck.length <= 0 || data.truck.height <= 0) {
+    errors.push('กรุณากรอกขนาดรถบรรทุกให้ถูกต้อง');
+  }
+  
+  // Check if box fits on pallet
+  const boxFitsNormal = (data.box.width <= data.pallet.width && data.box.length <= data.pallet.length);
+  const boxFitsRotated = (data.box.length <= data.pallet.width && data.box.width <= data.pallet.length);
+  
+  if (!boxFitsNormal && !boxFitsRotated) {
+    errors.push('กล่องใหญ่กว่าพาเลทในทุกทิศทาง');
+  }
+  
+  if (data.stacking.type === 'height') {
+    const minHeight = data.pallet.height + data.box.height;
+    if (data.stacking.maxHeight < minHeight) {
+      errors.push(`ความสูงสูงสุดต้องมากกว่า ${minHeight} mm`);
+    }
+  }
+  
+  return errors;
+}
+
+function calculateBoxesPerLayer(data) {
+  const { box, pallet } = data;
+  
+  // Normal orientation
+  const normalW = Math.floor(pallet.width / box.width);
+  const normalL = Math.floor(pallet.length / box.length);
+  const normalCount = normalW * normalL;
+  
+  // Rotated orientation (90 degrees)
+  const rotatedW = Math.floor(pallet.width / box.length);
+  const rotatedL = Math.floor(pallet.length / box.width);
+  const rotatedCount = rotatedW * rotatedL;
+  
+  // Choose the better orientation
+  let bestCount, bestOrientation, boxesW, boxesL;
+  
+  if (data.stacking.allowBoxRotate && rotatedCount > normalCount) {
+    bestCount = rotatedCount;
+    bestOrientation = 'หมุน 90°';
+    boxesW = rotatedW;
+    boxesL = rotatedL;
+  } else {
+    bestCount = normalCount;
+    bestOrientation = 'ปกติ';
+    boxesW = normalW;
+    boxesL = normalL;
+  }
+  
+  return {
+    count: bestCount,
+    orientation: bestOrientation,
+    layout: { width: boxesW, length: boxesL }
+  };
+}
+
+function calculateLayers(data, boxesPerLayer) {
+  if (data.stacking.type === 'height') {
+    const availableHeight = data.stacking.maxHeight - data.pallet.height;
+    return Math.max(0, Math.floor(availableHeight / data.box.height));
+  } else {
+    return data.stacking.layers;
+  }
+}
+
+function calculatePalletsOnTruck(data, palletTotalHeight) {
+  const { truck, pallet } = data;
+  
+  // Pallets per layer on truck floor
+  const normalW = Math.floor(truck.width / pallet.width);
+  const normalL = Math.floor(truck.length / pallet.length);
+  const normalCount = normalW * normalL;
+  
+  const rotatedW = Math.floor(truck.width / pallet.length);
+  const rotatedL = Math.floor(truck.length / pallet.width);
+  const rotatedCount = rotatedW * rotatedL;
+  
+  let palletsPerLayer, palletOrientation;
+  if (data.truck.allowPalletRotate && rotatedCount > normalCount) {
+    palletsPerLayer = rotatedCount;
+    palletOrientation = 'หมุน 90°';
+  } else {
+    palletsPerLayer = normalCount;
+    palletOrientation = 'ปกติ';
+  }
+  
+  // Calculate vertical stacking
+  let maxVerticalLayers = 1;
+  if (data.truck.allowPalletStack) {
+    maxVerticalLayers = Math.min(
+      data.truck.maxPalletLayers,
+      Math.floor(truck.height / palletTotalHeight)
+    );
+  }
+  
+  return {
+    palletsPerLayer,
+    maxVerticalLayers,
+    totalPallets: palletsPerLayer * maxVerticalLayers,
+    palletOrientation
+  };
+}
+
+function calculate() {
+  const data = getFormData();
+  
+  // Validate inputs
+  const errors = validateInputs(data);
+  if (errors.length > 0) {
+    showErrors(errors);
+    return;
+  }
+  
+  // Calculate boxes per layer
+  const layerResult = calculateBoxesPerLayer(data);
+  
+  // Calculate number of layers
+  const numLayers = calculateLayers(data, layerResult.count);
+  
+  // Calculate totals for pallet
+  const boxesPerPallet = layerResult.count * numLayers;
+  const palletTotalWeight = data.pallet.weight + (boxesPerPallet * data.box.weight);
+  const palletTotalHeight = data.pallet.height + (numLayers * data.box.height);
+  
+  // Calculate truck loading
+  const truckResult = calculatePalletsOnTruck(data, palletTotalHeight);
+  
+  // Calculate final totals
+  const totalBoxes = boxesPerPallet * truckResult.totalPallets;
+  const totalWeight = palletTotalWeight * truckResult.totalPallets;
+  const remainingHeight = data.truck.height - (truckResult.maxVerticalLayers * palletTotalHeight);
+  
+  // Store results globally
+  calculationResults = {
+    data,
+    pallet: {
+      boxesPerLayer: layerResult.count,
+      boxOrientation: layerResult.orientation,
+      boxLayout: layerResult.layout,
+      numLayers,
+      boxesPerPallet,
+      totalWeight: palletTotalWeight,
+      totalHeight: palletTotalHeight
+    },
+    truck: {
+      palletsPerLayer: truckResult.palletsPerLayer,
+      maxVerticalLayers: truckResult.maxVerticalLayers,
+      totalPallets: truckResult.totalPallets,
+      palletOrientation: truckResult.palletOrientation,
+      totalWeight,
+      totalBoxes,
+      remainingHeight
+    }
+  };
+  
+  // Update displays
+  updateResults();
+  updateSimulation();
+}
+
+// ========== DISPLAY FUNCTIONS ==========
+function showErrors(errors) {
+  const errorHTML = errors.map(error => 
+    `<div class="alert alert-warning">${error}</div>`
+  ).join('');
+  
+  elements.resultsSection.innerHTML = errorHTML;
+  elements.resultsSection.style.display = 'block';
+}
+
+function updateResults() {
+  const { data, pallet, truck } = calculationResults;
+  
+  // Update stat cards
+  document.getElementById('boxesPerLayer').textContent = formatNumber(pallet.boxesPerLayer);
+  document.getElementById('totalLayers').textContent = formatNumber(pallet.numLayers);
+  document.getElementById('boxesPerPallet').textContent = formatNumber(pallet.boxesPerPallet);
+  document.getElementById('palletTotalWeight').textContent = formatNumber(pallet.totalWeight, 1);
+  document.getElementById('palletsPerTruck').textContent = formatNumber(truck.totalPallets);
+  document.getElementById('totalTruckWeight').textContent = formatNumber(truck.totalWeight, 1);
+  
+  // Model/Part info
+  let modelPartHTML = '';
+  if (data.modelName || data.partName) {
+    modelPartHTML = '<div style="margin-bottom: 16px;">';
+    if (data.modelName) modelPartHTML += `<strong>Model:</strong> ${data.modelName} `;
+    if (data.partName) modelPartHTML += `<strong>Part:</strong> ${data.partName}`;
+    modelPartHTML += '</div>';
+  }
+  document.getElementById('modelPartInfo').innerHTML = modelPartHTML;
+  
+  // Additional info
+  const additionalInfo = document.getElementById('additionalInfo');
+  additionalInfo.innerHTML = `
+    <strong>สรุป:</strong> กล่องต่อชั้น ${pallet.boxesPerLayer} ใบ (${pallet.boxOrientation}) × 
+    ${pallet.numLayers} ชั้น = ${pallet.boxesPerPallet} กล่อง/พาเลท<br>
+    <strong>รถบรรทุก:</strong> ${truck.palletsPerLayer} พาเลท/ชั้น (${truck.palletOrientation}) × 
+    ${truck.maxVerticalLayers} ชั้น = ${truck.totalPallets} พาเลท รวม ${truck.totalBoxes} กล่อง<br>
+    <strong>พื้นที่เหลือ:</strong> ความสูง ${formatUnit(truck.remainingHeight, data.displayUnit)}
+  `;
+  additionalInfo.style.display = 'block';
+  
+  elements.resultsSection.style.display = 'block';
+}
+
+function updateSimulation() {
+  const { data, pallet, truck } = calculationResults;
+  const preset = COLOR_PRESETS[data.colorPreset];
+  const zoom = parseFloat(elements.zoomSlider.value);
+  
+  const svg = elements.simulationSVG;
+  svg.innerHTML = '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2095ff" /></marker></defs>';
+  
+  const svgWidth = 800;
+  const svgHeight = 500;
+  const margin = 50;
+  
+  let content = '';
+  let infoText = '';
+  
+  if (currentView === 'top') {
+    // Top view: Pallet with boxes layout
+    const scale = Math.min((svgWidth - margin * 2) / data.pallet.width, (svgHeight - margin * 2) / data.pallet.length) * zoom;
+    const palletW = data.pallet.width * scale;
+    const palletL = data.pallet.length * scale;
+    const startX = (svgWidth - palletW) / 2;
+    const startY = (svgHeight - palletL) / 2;
+    
+    // Draw pallet base
+    content += `<rect x="${startX}" y="${startY}" width="${palletW}" height="${palletL}" 
+                fill="${preset.pallet}" stroke="${preset.stroke}" stroke-width="3"/>`;
+    
+    // Draw boxes
+    const boxW = (data.box.width * scale) / (pallet.boxOrientation === 'หมุน 90°' ? data.box.length : data.box.width) * 
+                 (pallet.boxOrientation === 'หมุน 90°' ? data.box.length : data.box.width);
+    const boxL = (data.box.length * scale) / (pallet.boxOrientation === 'หมุน 90°' ? data.box.width : data.box.length) * 
+                 (pallet.boxOrientation === 'หมุน 90°' ? data.box.width : data.box.length);
+    
+    for (let i = 0; i < pallet.boxLayout.width; i++) {
+      for (let j = 0; j < pallet.boxLayout.length; j++) {
+        const x = startX + (i * boxW);
+        const y = startY + (j * boxL);
+        content += `<rect x="${x + 1}" y="${y + 1}" width="${boxW - 2}" height="${boxL - 2}" 
+                    fill="${data.box.color}" stroke="${preset.stroke}" stroke-width="1" opacity="0.8"/>`;
+      }
+    }
+    
+    // Dimension lines
+    content += `<line x1="${startX}" y1="${startY + palletL + 20}" x2="${startX + palletW}" y2="${startY + palletL + 20}" 
+                stroke="#2095ff" stroke-width="2" marker-end="url(#arrowhead)"/>`;
+    content += `<text x="${startX + palletW/2}" y="${startY + palletL + 35}" text-anchor="middle" fill="#2095ff" font-weight="bold">
+                ${formatUnit(data.pallet.width, data.displayUnit)}</text>`;
+    
+    infoText = `Top View - ${pallet.boxesPerLayer} กล่อง/ชั้น (${pallet.boxOrientation})`;
+    
+  } else if (currentView === 'front') {
+    // Front view: Show stacking layers
+    const scale = Math.min((svgWidth - margin * 2) / data.pallet.width, (svgHeight - margin * 2) / pallet.totalHeight) * zoom;
+    const palletW = data.pallet.width * scale;
+    const palletH = data.pallet.height * scale;
+    const layerH = data.box.height * scale;
+    const startX = (svgWidth - palletW) / 2;
+    const startY = svgHeight - margin - palletH - (pallet.numLayers * layerH);
+    
+    // Draw pallet base
+    content += `<rect x="${startX}" y="${startY + pallet.numLayers * layerH}" width="${palletW}" height="${palletH}" 
+                fill="${preset.pallet}" stroke="${preset.stroke}" stroke-width="3"/>`;
+    
+    // Draw box layers
+    for (let layer = 0; layer < pallet.numLayers; layer++) {
+      const y = startY + (pallet.numLayers - layer - 1) * layerH;
+      content += `<rect x="${startX}" y="${y}" width="${palletW}" height="${layerH}" 
+                  fill="${data.box.color}" stroke="${preset.stroke}" stroke-width="1.5" opacity="0.8"/>`;
+      
+      // Layer separator line
+      if (layer > 0) {
+        content += `<line x1="${startX}" y1="${y + layerH}" x2="${startX + palletW}" y2="${y + layerH}" 
+                    stroke="${preset.stroke}" stroke-width="0.5" opacity="0.5"/>`;
+      }
+    }
+    
+    infoText = `Front View - ${pallet.numLayers} ชั้น × ${pallet.boxesPerLayer} กล่อง = ${pallet.boxesPerPallet} กล่อง/พาเลท`;
+    
+  } else if (currentView === 'side') {
+    // Side view: Similar to front but from the side
+    const scale = Math.min((svgWidth - margin * 2) / data.pallet.length, (svgHeight - margin * 2) / pallet.totalHeight) * zoom;
+    const palletL = data.pallet.length * scale;
+    const palletH = data.pallet.height * scale;
+    const layerH = data.box.height * scale;
+    const startX = (svgWidth - palletL) / 2;
+    const startY = svgHeight - margin - palletH - (pallet.numLayers * layerH);
+    
+    // Draw pallet base
+    content += `<rect x="${startX}" y="${startY + pallet.numLayers * layerH}" width="${palletL}" height="${palletH}" 
+                fill="${preset.pallet}" stroke="${preset.stroke}" stroke-width="3"/>`;
+    
+    // Draw box layers
+    for (let layer = 0; layer < pallet.numLayers; layer++) {
+      const y = startY + (pallet.numLayers - layer - 1) * layerH;
+      content += `<rect x="${startX}" y="${y}" width="${palletL}" height="${layerH}" 
+                  fill="${data.box.color}" stroke="${preset.stroke}" stroke-width="1.5" opacity="0.8"/>`;
+    }
+    
+    infoText = `Side View - ความสูงรวม ${formatUnit(pallet.totalHeight, data.displayUnit)}`;
+    
+  } else if (currentView === 'iso') {
+    // Isometric view: 3D-like representation
+    const scale = Math.min(svgWidth, svgHeight) * 0.3 * zoom;
+    const centerX = svgWidth / 2;
+    const centerY = svgHeight / 2;
+    
+    // Isometric projection factors
+    const isoX = 0.866; // cos(30°)
+    const isoY = 0.5;   // sin(30°)
+    
+    const palletW = data.pallet.width * scale / 1000;
+    const palletL = data.pallet.length * scale / 1000;
+    const palletH = data.pallet.height * scale / 1000;
+    const boxH = data.box.height * scale / 1000;
+    
+    // Draw pallet base (isometric)
+    const p1x = centerX - palletW * isoX / 2;
+    const p1y = centerY + palletL * isoY / 2;
+    const p2x = centerX + palletW * isoX / 2;
+    const p2y = centerY + palletL * isoY / 2;
+    const p3x = centerX + palletW * isoX / 2 - palletL * isoX / 2;
+    const p3y = centerY + palletL * isoY / 2 - palletL * isoY / 2;
+    const p4x = centerX - palletW * isoX / 2 - palletL * isoX / 2;
+    const p4y = centerY + palletL * isoY / 2 - palletL * isoY / 2;
+    
+    // Pallet top face
+    content += `<polygon points="${p1x},${p1y-palletH} ${p2x},${p2y-palletH} ${p3x},${p3y-palletH} ${p4x},${p4y-palletH}" 
+                fill="${preset.pallet}" stroke="${preset.stroke}" stroke-width="2"/>`;
+    
+    // Pallet right face
+    content += `<polygon points="${p2x},${p2y-palletH} ${p2x},${p2y} ${p3x},${p3y} ${p3x},${p3y-palletH}" 
+                fill="${preset.pallet}" opacity="0.7" stroke="${preset.stroke}" stroke-width="2"/>`;
+    
+    // Box layers (simplified)
+    for (let layer = 0; layer < pallet.numLayers; layer++) {
+      const layerY = p1y - palletH - (layer + 1) * boxH;
+      content += `<polygon points="${p1x},${layerY} ${p2x},${layerY} ${p3x},${layerY - palletL * isoY / 2} ${p4x},${layerY - palletL * isoY / 2}" 
+                  fill="${data.box.color}" opacity="0.8" stroke="${preset.stroke}" stroke-width="1"/>`;
+    }
+    
+    infoText = `Isometric View - 3D Representation`;
+  }
+  
+  svg.innerHTML += content;
+  document.getElementById('simInfo').textContent = infoText;
+}
+
+// ========== EXPORT FUNCTIONS ==========
+function exportSVG() {
+  if (!calculationResults) return;
+  
+  const svgContent = elements.simulationSVG.outerHTML;
+  const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `box-simulation-${currentView}.svg`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportJSON() {
+  if (!calculationResults) return;
+  
+  const exportData = {
+    timestamp: new Date().toISOString(),
+    inputs: calculationResults.data,
+    results: {
+      pallet: calculationResults.pallet,
+      truck: calculationResults.truck
+    }
+  };
+  
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'box-simulation-results.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ========== RESET FUNCTION ==========
+function resetForm() {
+  // Reset all form fields to defaults
+  document.getElementById('modelName').value = '';
+  document.getElementById('partName').value = '';
+  
+  // Reset pallet to EU standard
+  elements.palletOptions.querySelectorAll('.dropdown-option').forEach(opt => opt.classList.remove('active'));
+  elements.palletOptions.querySelector('[data-value="eu"]').classList.add('active');
+  elements.customPalletRow.style.display = 'none';
+  document.getElementById('palletHeight').value = 144;
+  document.getElementById('palletWeight').value = 20;
+  
+  // Reset truck to medium
+  elements.truckOptions.querySelectorAll('.dropdown-option').forEach(opt => opt.classList.remove('active'));
+  elements.truckOptions.querySelector('[data-value="medium"]').classList.add('active');
+  elements.customTruckRow.style.display = 'none';
+  
+  // Reset box dimensions
+  document.getElementById('boxWidth').value = 200;
+  document.getElementById('boxLength').value = 300;
+  document.getElementById('boxHeight').value = 200;
+  document.getElementById('boxWeight').value = 2;
+  document.getElementById('boxColor').value = '#f59f00';
+  document.getElementById('kraftBox').checked = false;
+  document.getElementById('colorPreset').value = 'amber';
+  
+  // Reset stacking
+  document.getElementById('maxHeightMode').checked = true;
+  document.getElementById('maxHeight').value = 1400;
+  document.getElementById('boxLayers').value = 3;
+  document.getElementById('allowBoxRotate').checked = true;
+  
+  // Reset truck options
+  document.getElementById('allowPalletStack').checked = true;
+  document.getElementById('maxPalletLayers').value = 2;
+  document.getElementById('allowPalletRotate').checked = true;
+  
+  // Reset display
+  document.getElementById('unitMM').checked = true;
+  
+  // Hide results
+  elements.resultsSection.style.display = 'none';
+  
+  // Reset simulation
+  elements.simulationSVG.innerHTML = `
+    <text x="400" y="250" text-anchor="middle" fill="#718096" font-size="18">
+      กดปุ่ม "คำนวณและแสดงผล" เพื่อดู Simulation
+    </text>
+  `;
+  document.getElementById('simInfo').textContent = '';
+  
+  calculationResults = null;
+  updateBoxPreview();
+}
+
+// ========== INITIALIZATION ==========
+document.addEventListener('DOMContentLoaded', () => {
+  // Set initial values
+  resetForm();
+  updateBoxPreview();
 });
-function renderSim(F,P,T){
-  // get color set
-  const cp = COLOR_PRESETS[F.colorPreset];
-  let boxFill = F.boxKraft ? "#b08e62" : F.boxColor, // kraft override
-   palletFill = cp.pallet, truckFill = cp.truck, stroke=cp.stroke,
-   bg = document.documentElement.getAttribute("data-theme")==="dark"?cp.bgdk:cp.bglt;
-  // SVG
-  let svg = document.getElementById("palletSvg");
-  let w = svg.width.baseVal.value, h = svg.height.baseVal.value;
-  svg.innerHTML = ""; 
-  svg.style.background = bg;
-  // scaling factors
-  let pW = F.pw, pL=F.pl, pB=F.pb, bW=P.boxLayerW, bL=P.boxLayerL, bH=F.bh, nB=P.boxesPerLayer, nL=P.maxLayers;
-  let margin=32, Z=clamp(parseFloat(document.getElementById("zoomSlider").value)||1,0.5,2.5);
-
-  // Helper for dimension lines
-  function dimLine(x1,y1,x2,y2,label,side){
-    let midx=(x1+x2)/2, midy=(y1+y2)/2+((side=="t")?-11:13);
-    return `<line class="dimline" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><text class="dimlabel" x="${midx}" y="${midy}">${label}</text>`;
-  }
-  // Views
-  let simLabel = "";
-  if(currentView==="top"){ // พื้น + กล่องบนพาเลท (1 ชั้น)
-    let scale = Math.min((w-2*margin)/pW, (h-2*margin)/pL)*Z;
-    let ox=margin, oy=margin;
-    let boxes=[];
-    let nW=Math.floor(pW/bW), nL2=Math.floor(pL/bL);
-    for(let i=0;i<nW;i++) for(let j=0;j<nL2;j++)
-      boxes.push({x:ox+i*bW*scale, y:oy+j*bL*scale, w:bW*scale, h:bL*scale});
-    // พื้น
-    svg.innerHTML += `<rect x="${ox}" y="${oy}" width="${pW*scale}" height="${pL*scale}" fill="${palletFill}" stroke="${stroke}" stroke-width="2"/>`;
-    // กล่อง
-    for(const b of boxes)
-      svg.innerHTML += `<rect x="${b.x}" y="${b.y}" width="${b.w-1}" height="${b.h-1}" fill="${boxFill}" stroke="${stroke}" stroke-width="1.1"/>`;
-    // Dim lines
-    svg.innerHTML += dimLine(ox,oy+pL*scale+7, ox+pW*scale,oy+pL*scale+7, rUnit(pW,F.unit),'b');
-    svg.innerHTML += dimLine(ox-7,oy, ox-7,oy+pL*scale, rUnit(pL,F.unit),'l');
-    simLabel = "Top View: Pallet + Boxes";
-  }
-  else if(currentView==="front"){ // หน้า
-    let scale = Math.min((w-2*margin)/pW, (h-2*margin)/(F.pb+P.maxLayers*bH))*Z;
-    let ox=margin, oy=margin;
-    svg.innerHTML += `<rect x="${ox}" y="${oy+P.maxLayers*bH*scale}" width="${pW*scale}" height="${F.pb*scale}" fill="${palletFill}" stroke="${stroke}" stroke-width="2"/>`;
-    for(let l=0;l<P.maxLayers;l++){
-      svg.innerHTML += `<rect x="${ox}" y="${oy+(P.maxLayers-l-1)*bH*scale}" width="${pW*scale}" height="${bH*scale}" fill="${boxFill}" stroke="${stroke}" stroke-width="1.1"/>`;
-      svg.innerHTML += `<line x1="${ox}" y1="${oy+(P.maxLayers-l-1)*bH*scale}" x2="${ox+pW*scale}" y2="${oy+(P.maxLayers-l-1)*bH*scale}" stroke="#c77f00" stroke-width="0.75" opacity="0.3"/>`;
-    }
-    svg.innerHTML += dimLine(ox+pW*scale+7, oy, ox+pW*scale+7, oy+P.maxLayers*bH*scale, `${P.maxLayers} ชั้น`,'r');
-    svg.innerHTML += dimLine(ox-13, oy, ox-13, oy+(P.maxLayers*bH+F.pb)*scale, rUnit(P.palletTotalHeight,F.unit),'l');
-    simLabel = "Front View";
-  }
-  else if(currentView==="side"){ // ด้านข้างยาว
-    let scale = Math.min((w-2*margin)/pL, (h-2*margin)/(F.pb+P.maxLayers*bH))*Z;
-    let ox=margin, oy=margin;
-    svg.innerHTML += `<rect x="${ox}" y="${oy+P.maxLayers*bH*scale}" width="${pL*scale}" height="${F.pb*scale}" fill="${palletFill}" stroke="${stroke}" stroke-width="2"/>`;
-    for(let l=0;l<P.maxLayers;l++){
-      svg.innerHTML += `<rect x="${ox}" y="${oy+(P.maxLayers-l-1)*bH*scale}" width="${pL*scale}" height="${bH*scale}" fill="${boxFill}" stroke="${stroke}" stroke-width="1.1"/>`;
-    }
-    svg.innerHTML += dimLine(ox, oy+pL*scale+7, ox+pL*scale, oy+pL*scale+7, rUnit(pL,F.unit),'b');
-    svg.innerHTML += dimLine(ox-12, oy, ox-12, oy+(P.maxLayers*bH+F.pb)*scale, rUnit(P.palletTotalHeight,F.unit),'l');
-    simLabel = "Side View";
-  }
-  else if(currentView==="iso"){ // Isometric View
-    let scale = Math.min((w-2*margin)/pW, (h-2*margin)/((F.pb+P.maxLayers*bH)*0.7))*Z*0.7;
-    let ox=w/2-pW*scale/2, oy=margin+110;
-    // Pallet base, orthogonal 3D
-    for(let l=0;l<=P.maxLayers;l++){
-      let y=oy-l*bH*scale*0.5;
-      svg.innerHTML += `<polygon points="${ox},${y+F.pb*scale*0.4} ${ox+pW*scale},${y+F.pb*scale*0.4} ${ox+pW*scale*0.85},${y} ${ox+pW*scale*0.15},${y}" fill="${l==0?palletFill:boxFill}" stroke="${stroke}" stroke-width="1.3" opacity="${l==0?1:0.8}"/>`;
-    }
-    simLabel = "Isometric View";
-  }
-  document.getElementById("simLabels").innerHTML = simLabel + 
-    (F.modelName?" | <b>Model:</b> "+F.modelName:"") +
-    (F.partName?" | <b>Part:</b> "+F.partName :"");
-}
-// ---- Export ----
-document.getElementById("exportJsonBtn").onclick = function(){
-  const F=parseInputs(),P=computePallet(F),T=computeTruck(F,P);
-  const out={inputs:F, pallet:P, truck:T, ts:new Date().toISOString()};
-  downloadBlob(JSON.stringify(out,null,2),"pallet-sim.json","application/json");
-};
-function downloadBlob(data, fname, type) {
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([data], {type}));
-  a.download=fname; a.click();
-}
-document.getElementById("exportSvgBtn").onclick = function(){
-  let svg=document.getElementById("palletSvg").outerHTML;
-  downloadBlob(svg,"pallet-sim.svg","image/svg+xml");
-};
-// ---- Zoom Slider ----
-document.getElementById("zoomSlider").oninput = renderAll;
-
-setTimeout(()=>renderAll(),150);
 </script>
+
 </body>
 </html>
