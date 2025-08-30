@@ -1323,7 +1323,7 @@ function updateSimulation() {
   let infoText = '';
   
   if (currentView === 'top') {
-    // Top view: Pallet with boxes layout (นี่ทำงานถูกต้องแล้ว)
+    // Top view: แสดงกล่องทั้งหมดในชั้นบนสุด (ถูกต้องแล้ว)
     const scale = Math.min((svgWidth - margin * 2) / data.pallet.width, (svgHeight - margin * 2) / data.pallet.length) * zoom * 0.8;
     const palletW = data.pallet.width * scale;
     const palletL = data.pallet.length * scale;
@@ -1365,13 +1365,23 @@ function updateSimulation() {
     infoText = `Top View - ${pallet.boxesPerLayer} กล่อง/ชั้น (${pallet.boxOrientation})`;
     
   } else if (currentView === 'front') {
-    // Front view: แก้ไขให้ถูกต้อง
+    // Front view: แสดงแถวกล่องจากหน้ามอง (ความกว้าง × ความสูง)
     const totalHeight = pallet.totalHeight;
     const scale = Math.min((svgWidth - margin * 2) / data.pallet.width, (svgHeight - margin * 2) / totalHeight) * zoom * 0.7;
     
     const palletW = data.pallet.width * scale;
     const palletBaseH = data.pallet.height * scale;
     const boxLayerH = data.box.height * scale;
+    
+    // คำนวณขนาดกล่องจริงตามการหมุน
+    let boxFrontW, numBoxesWidth;
+    if (pallet.boxOrientation === 'หมุน 90°') {
+      boxFrontW = data.box.length * scale;
+      numBoxesWidth = Math.floor(data.pallet.width / data.box.length);
+    } else {
+      boxFrontW = data.box.width * scale;
+      numBoxesWidth = Math.floor(data.pallet.width / data.box.width);
+    }
     
     const startX = (svgWidth - palletW) / 2;
     const startY = svgHeight - margin - palletBaseH;
@@ -1380,15 +1390,22 @@ function updateSimulation() {
     content += `<rect x="${startX}" y="${startY}" width="${palletW}" height="${palletBaseH}" 
                 fill="${preset.pallet}" stroke="${preset.stroke}" stroke-width="3"/>`;
     
-    // Draw box layers from bottom to top
+    // Draw box layers - แสดงแถวกล่องในแต่ละชั้น
     for (let layer = 0; layer < pallet.numLayers; layer++) {
       const layerY = startY - ((layer + 1) * boxLayerH);
-      content += `<rect x="${startX}" y="${layerY}" width="${palletW}" height="${boxLayerH}" 
-                  fill="${data.box.color}" stroke="${preset.stroke}" stroke-width="1.5" opacity="0.8"/>`;
+      
+      // วาดกล่องแต่ละใบในแถว
+      for (let boxCol = 0; boxCol < numBoxesWidth; boxCol++) {
+        const boxX = startX + (boxCol * boxFrontW);
+        content += `<rect x="${boxX + 1}" y="${layerY + 1}" width="${boxFrontW - 2}" height="${boxLayerH - 2}" 
+                    fill="${data.box.color}" stroke="${preset.stroke}" stroke-width="1" opacity="0.8"/>`;
+      }
       
       // Add layer divider lines
-      content += `<line x1="${startX + 5}" y1="${layerY + boxLayerH}" x2="${startX + palletW - 5}" y2="${layerY + boxLayerH}" 
-                  stroke="${preset.stroke}" stroke-width="0.8" opacity="0.4" stroke-dasharray="3,2"/>`;
+      if (layer < pallet.numLayers - 1) {
+        content += `<line x1="${startX}" y1="${layerY}" x2="${startX + palletW}" y2="${layerY}" 
+                    stroke="${preset.stroke}" stroke-width="0.8" opacity="0.4" stroke-dasharray="3,2"/>`;
+      }
     }
     
     // Height dimension line
@@ -1398,16 +1415,26 @@ function updateSimulation() {
     content += `<text x="${startX + palletW + 35}" y="${(startY + palletBaseH + topY) / 2}" text-anchor="middle" fill="#2095ff" font-weight="bold" font-size="12" transform="rotate(-90 ${startX + palletW + 35} ${(startY + palletBaseH + topY) / 2})">
                 ${formatUnit(totalHeight, data.displayUnit)}</text>`;
     
-    infoText = `Front View - ${pallet.numLayers} ชั้น × ${pallet.boxesPerLayer} กล่อง = ${pallet.boxesPerPallet} กล่อง/พาเลท`;
+    infoText = `Front View - ${numBoxesWidth} แถว × ${pallet.numLayers} ชั้น = ${numBoxesWidth * pallet.numLayers} กล่องที่มองเห็น`;
     
   } else if (currentView === 'side') {
-    // Side view: แก้ไขให้ถูกต้อง
+    // Side view: แสดงแถวกล่องจากด้านข้าง (ความยาว × ความสูง)
     const totalHeight = pallet.totalHeight;
     const scale = Math.min((svgWidth - margin * 2) / data.pallet.length, (svgHeight - margin * 2) / totalHeight) * zoom * 0.7;
     
     const palletL = data.pallet.length * scale;
     const palletBaseH = data.pallet.height * scale;
     const boxLayerH = data.box.height * scale;
+    
+    // คำนวณขนาดกล่องจริงตามการหมุน
+    let boxSideL, numBoxesLength;
+    if (pallet.boxOrientation === 'หมุน 90°') {
+      boxSideL = data.box.width * scale;
+      numBoxesLength = Math.floor(data.pallet.length / data.box.width);
+    } else {
+      boxSideL = data.box.length * scale;
+      numBoxesLength = Math.floor(data.pallet.length / data.box.length);
+    }
     
     const startX = (svgWidth - palletL) / 2;
     const startY = svgHeight - margin - palletBaseH;
@@ -1416,11 +1443,22 @@ function updateSimulation() {
     content += `<rect x="${startX}" y="${startY}" width="${palletL}" height="${palletBaseH}" 
                 fill="${preset.pallet}" stroke="${preset.stroke}" stroke-width="3"/>`;
     
-    // Draw box layers
+    // Draw box layers - แสดงแถวกล่องในแต่ละชั้น
     for (let layer = 0; layer < pallet.numLayers; layer++) {
       const layerY = startY - ((layer + 1) * boxLayerH);
-      content += `<rect x="${startX}" y="${layerY}" width="${palletL}" height="${boxLayerH}" 
-                  fill="${data.box.color}" stroke="${preset.stroke}" stroke-width="1.5" opacity="0.8"/>`;
+      
+      // วาดกล่องแต่ละใบในแถว
+      for (let boxRow = 0; boxRow < numBoxesLength; boxRow++) {
+        const boxX = startX + (boxRow * boxSideL);
+        content += `<rect x="${boxX + 1}" y="${layerY + 1}" width="${boxSideL - 2}" height="${boxLayerH - 2}" 
+                    fill="${data.box.color}" stroke="${preset.stroke}" stroke-width="1" opacity="0.8"/>`;
+      }
+      
+      // Add layer divider lines
+      if (layer < pallet.numLayers - 1) {
+        content += `<line x1="${startX}" y1="${layerY}" x2="${startX + palletL}" y2="${layerY}" 
+                    stroke="${preset.stroke}" stroke-width="0.8" opacity="0.4" stroke-dasharray="3,2"/>`;
+      }
     }
     
     // Length dimension line
@@ -1429,13 +1467,13 @@ function updateSimulation() {
     content += `<text x="${startX + palletL/2}" y="${startY + palletBaseH + 40}" text-anchor="middle" fill="#2095ff" font-weight="bold" font-size="14">
                 ${formatUnit(data.pallet.length, data.displayUnit)}</text>`;
     
-    infoText = `Side View - ความสูงรวม ${formatUnit(pallet.totalHeight, data.displayUnit)}`;
+    infoText = `Side View - ${numBoxesLength} แถว × ${pallet.numLayers} ชั้น = ${numBoxesLength * pallet.numLayers} กล่องที่มองเห็น`;
     
   } else if (currentView === 'iso') {
-    // Isometric view: แก้ไขให้ถูกต้อง
-    const baseScale = 0.15 * zoom;
+    // Isometric view: แสดงกล่องแบบ 3D ให้เห็นทั้งความกว้าง ความลึก และความสูง
+    const baseScale = 0.12 * zoom;
     const centerX = svgWidth / 2;
-    const centerY = svgHeight / 2 + 30;
+    const centerY = svgHeight / 2 + 50;
     
     // Isometric angles
     const cos30 = Math.cos(Math.PI / 6); // 0.866
@@ -1447,7 +1485,21 @@ function updateSimulation() {
     const palletH = data.pallet.height * baseScale;
     const boxH = data.box.height * baseScale;
     
-    // Calculate isometric coordinates for pallet base
+    // คำนวณขนาดและจำนวนกล่องตามการหมุน
+    let actualBoxW, actualBoxL, numBoxW, numBoxL;
+    if (pallet.boxOrientation === 'หมุน 90°') {
+      actualBoxW = data.box.length * baseScale;
+      actualBoxL = data.box.width * baseScale;
+      numBoxW = Math.floor(data.pallet.width / data.box.length);
+      numBoxL = Math.floor(data.pallet.length / data.box.width);
+    } else {
+      actualBoxW = data.box.width * baseScale;
+      actualBoxL = data.box.length * baseScale;
+      numBoxW = Math.floor(data.pallet.width / data.box.width);
+      numBoxL = Math.floor(data.pallet.length / data.box.length);
+    }
+    
+    // Calculate isometric coordinates
     function isoPoint(x, y, z) {
       return {
         x: centerX + (x - y) * cos30,
@@ -1473,40 +1525,55 @@ function updateSimulation() {
     content += `<polygon points="${p7.x},${p7.y} ${p3.x},${p3.y} ${p4.x},${p4.y} ${p8.x},${p8.y}" 
                 fill="${preset.pallet}" opacity="0.6" stroke="${preset.stroke}" stroke-width="2"/>`;
     
-    // Draw box layers
+    // Draw individual boxes in 3D
     for (let layer = 0; layer < pallet.numLayers; layer++) {
       const layerZ = palletH + (layer * boxH);
       const layerTop = layerZ + boxH;
       
-      const b1 = isoPoint(0, 0, layerTop);
-      const b2 = isoPoint(palletW, 0, layerTop);
-      const b3 = isoPoint(palletW, palletL, layerTop);
-      const b4 = isoPoint(0, palletL, layerTop);
-      
-      // Box layer faces
-      content += `<polygon points="${b1.x},${b1.y} ${b2.x},${b2.y} ${b3.x},${b3.y} ${b4.x},${b4.y}" 
-                  fill="${data.box.color}" stroke="${preset.stroke}" stroke-width="1.5" opacity="0.8"/>`;
-      
-      if (layer === pallet.numLayers - 1) {
-        // Side faces for top layer only
-        const b5 = isoPoint(0, 0, layerZ);
-        const b6 = isoPoint(palletW, 0, layerZ);
-        const b7 = isoPoint(palletW, palletL, layerZ);
-        const b8 = isoPoint(0, palletL, layerZ);
-        
-        content += `<polygon points="${b2.x},${b2.y} ${b6.x},${b6.y} ${b7.x},${b7.y} ${b3.x},${b3.y}" 
-                    fill="${data.box.color}" opacity="0.6" stroke="${preset.stroke}" stroke-width="1"/>`;
-        content += `<polygon points="${b3.x},${b3.y} ${b7.x},${b7.y} ${b8.x},${b8.y} ${b4.x},${b4.y}" 
-                    fill="${data.box.color}" opacity="0.4" stroke="${preset.stroke}" stroke-width="1"/>`;
+      // วาดกล่องแต่ละใบ
+      for (let i = 0; i < numBoxW; i++) {
+        for (let j = 0; j < numBoxL; j++) {
+          const boxStartX = i * actualBoxW;
+          const boxStartY = j * actualBoxL;
+          const boxEndX = boxStartX + actualBoxW;
+          const boxEndY = boxStartY + actualBoxL;
+          
+          // Box corners
+          const b1 = isoPoint(boxStartX, boxStartY, layerTop);
+          const b2 = isoPoint(boxEndX, boxStartY, layerTop);
+          const b3 = isoPoint(boxEndX, boxEndY, layerTop);
+          const b4 = isoPoint(boxStartX, boxEndY, layerTop);
+          const b5 = isoPoint(boxStartX, boxStartY, layerZ);
+          const b6 = isoPoint(boxEndX, boxStartY, layerZ);
+          const b7 = isoPoint(boxEndX, boxEndY, layerZ);
+          const b8 = isoPoint(boxStartX, boxEndY, layerZ);
+          
+          // Box top face
+          content += `<polygon points="${b1.x},${b1.y} ${b2.x},${b2.y} ${b3.x},${b3.y} ${b4.x},${b4.y}" 
+                      fill="${data.box.color}" stroke="${preset.stroke}" stroke-width="0.8" opacity="0.9"/>`;
+          
+          // Box right face (ถ้าอยู่ขอบขวา)
+          if (i === numBoxW - 1) {
+            content += `<polygon points="${b2.x},${b2.y} ${b6.x},${b6.y} ${b7.x},${b7.y} ${b3.x},${b3.y}" 
+                        fill="${data.box.color}" opacity="0.7" stroke="${preset.stroke}" stroke-width="0.8"/>`;
+          }
+          
+          // Box front face (ถ้าอยู่ขอบหน้า)
+          if (j === numBoxL - 1) {
+            content += `<polygon points="${b3.x},${b3.y} ${b7.x},${b7.y} ${b8.x},${b8.y} ${b4.x},${b4.y}" 
+                        fill="${data.box.color}" opacity="0.5" stroke="${preset.stroke}" stroke-width="0.8"/>`;
+          }
+        }
       }
     }
     
-    infoText = `Isometric View - 3D มุมมองรวม ${pallet.boxesPerPallet} กล่อง`;
+    infoText = `Isometric View - ${numBoxW}×${numBoxL}×${pallet.numLayers} = ${pallet.boxesPerPallet} กล่อง`;
   }
   
   svg.innerHTML += content;
   document.getElementById('simInfo').textContent = infoText;
 }
+
 
 
 // ========== EXPORT FUNCTIONS ==========
