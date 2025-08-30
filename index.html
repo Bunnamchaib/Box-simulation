@@ -1317,14 +1317,14 @@ function updateSimulation() {
   
   const svgWidth = 800;
   const svgHeight = 500;
-  const margin = 50;
+  const margin = 60;
   
   let content = '';
   let infoText = '';
   
   if (currentView === 'top') {
-    // Top view: Pallet with boxes layout
-    const scale = Math.min((svgWidth - margin * 2) / data.pallet.width, (svgHeight - margin * 2) / data.pallet.length) * zoom;
+    // Top view: Pallet with boxes layout (นี่ทำงานถูกต้องแล้ว)
+    const scale = Math.min((svgWidth - margin * 2) / data.pallet.width, (svgHeight - margin * 2) / data.pallet.length) * zoom * 0.8;
     const palletW = data.pallet.width * scale;
     const palletL = data.pallet.length * scale;
     const startX = (svgWidth - palletW) / 2;
@@ -1334,125 +1334,180 @@ function updateSimulation() {
     content += `<rect x="${startX}" y="${startY}" width="${palletW}" height="${palletL}" 
                 fill="${preset.pallet}" stroke="${preset.stroke}" stroke-width="3"/>`;
     
-    // Draw boxes
-    const boxW = (data.box.width * scale) / (pallet.boxOrientation === 'หมุน 90°' ? data.box.length : data.box.width) * 
-                 (pallet.boxOrientation === 'หมุน 90°' ? data.box.length : data.box.width);
-    const boxL = (data.box.length * scale) / (pallet.boxOrientation === 'หมุน 90°' ? data.box.width : data.box.length) * 
-                 (pallet.boxOrientation === 'หมุน 90°' ? data.box.width : data.box.length);
+    // Calculate actual box dimensions based on orientation
+    let actualBoxW = data.box.width;
+    let actualBoxL = data.box.length;
     
+    if (pallet.boxOrientation === 'หมุน 90°') {
+      actualBoxW = data.box.length;
+      actualBoxL = data.box.width;
+    }
+    
+    const boxScaleW = actualBoxW * scale;
+    const boxScaleL = actualBoxL * scale;
+    
+    // Draw boxes
     for (let i = 0; i < pallet.boxLayout.width; i++) {
       for (let j = 0; j < pallet.boxLayout.length; j++) {
-        const x = startX + (i * boxW);
-        const y = startY + (j * boxL);
-        content += `<rect x="${x + 1}" y="${y + 1}" width="${boxW - 2}" height="${boxL - 2}" 
+        const x = startX + (i * boxScaleW);
+        const y = startY + (j * boxScaleL);
+        content += `<rect x="${x + 2}" y="${y + 2}" width="${boxScaleW - 4}" height="${boxScaleL - 4}" 
                     fill="${data.box.color}" stroke="${preset.stroke}" stroke-width="1" opacity="0.8"/>`;
       }
     }
     
     // Dimension lines
-    content += `<line x1="${startX}" y1="${startY + palletL + 20}" x2="${startX + palletW}" y2="${startY + palletL + 20}" 
-                stroke="#2095ff" stroke-width="2" marker-end="url(#arrowhead)"/>`;
-    content += `<text x="${startX + palletW/2}" y="${startY + palletL + 35}" text-anchor="middle" fill="#2095ff" font-weight="bold">
+    content += `<line x1="${startX}" y1="${startY + palletL + 30}" x2="${startX + palletW}" y2="${startY + palletL + 30}" 
+                stroke="#2095ff" stroke-width="2" marker-start="url(#arrowhead)" marker-end="url(#arrowhead)"/>`;
+    content += `<text x="${startX + palletW/2}" y="${startY + palletL + 50}" text-anchor="middle" fill="#2095ff" font-weight="bold" font-size="14">
                 ${formatUnit(data.pallet.width, data.displayUnit)}</text>`;
     
     infoText = `Top View - ${pallet.boxesPerLayer} กล่อง/ชั้น (${pallet.boxOrientation})`;
     
   } else if (currentView === 'front') {
-    // Front view: Show stacking layers
-    const scale = Math.min((svgWidth - margin * 2) / data.pallet.width, (svgHeight - margin * 2) / pallet.totalHeight) * zoom;
+    // Front view: แก้ไขให้ถูกต้อง
+    const totalHeight = pallet.totalHeight;
+    const scale = Math.min((svgWidth - margin * 2) / data.pallet.width, (svgHeight - margin * 2) / totalHeight) * zoom * 0.7;
+    
     const palletW = data.pallet.width * scale;
-    const palletH = data.pallet.height * scale;
-    const layerH = data.box.height * scale;
+    const palletBaseH = data.pallet.height * scale;
+    const boxLayerH = data.box.height * scale;
+    
     const startX = (svgWidth - palletW) / 2;
-    const startY = svgHeight - margin - palletH - (pallet.numLayers * layerH);
+    const startY = svgHeight - margin - palletBaseH;
     
     // Draw pallet base
-    content += `<rect x="${startX}" y="${startY + pallet.numLayers * layerH}" width="${palletW}" height="${palletH}" 
+    content += `<rect x="${startX}" y="${startY}" width="${palletW}" height="${palletBaseH}" 
                 fill="${preset.pallet}" stroke="${preset.stroke}" stroke-width="3"/>`;
     
-    // Draw box layers
+    // Draw box layers from bottom to top
     for (let layer = 0; layer < pallet.numLayers; layer++) {
-      const y = startY + (pallet.numLayers - layer - 1) * layerH;
-      content += `<rect x="${startX}" y="${y}" width="${palletW}" height="${layerH}" 
+      const layerY = startY - ((layer + 1) * boxLayerH);
+      content += `<rect x="${startX}" y="${layerY}" width="${palletW}" height="${boxLayerH}" 
                   fill="${data.box.color}" stroke="${preset.stroke}" stroke-width="1.5" opacity="0.8"/>`;
       
-      // Layer separator line
-      if (layer > 0) {
-        content += `<line x1="${startX}" y1="${y + layerH}" x2="${startX + palletW}" y2="${y + layerH}" 
-                    stroke="${preset.stroke}" stroke-width="0.5" opacity="0.5"/>`;
-      }
+      // Add layer divider lines
+      content += `<line x1="${startX + 5}" y1="${layerY + boxLayerH}" x2="${startX + palletW - 5}" y2="${layerY + boxLayerH}" 
+                  stroke="${preset.stroke}" stroke-width="0.8" opacity="0.4" stroke-dasharray="3,2"/>`;
     }
+    
+    // Height dimension line
+    const topY = startY - (pallet.numLayers * boxLayerH);
+    content += `<line x1="${startX + palletW + 15}" y1="${startY + palletBaseH}" x2="${startX + palletW + 15}" y2="${topY}" 
+                stroke="#2095ff" stroke-width="2" marker-start="url(#arrowhead)" marker-end="url(#arrowhead)"/>`;
+    content += `<text x="${startX + palletW + 35}" y="${(startY + palletBaseH + topY) / 2}" text-anchor="middle" fill="#2095ff" font-weight="bold" font-size="12" transform="rotate(-90 ${startX + palletW + 35} ${(startY + palletBaseH + topY) / 2})">
+                ${formatUnit(totalHeight, data.displayUnit)}</text>`;
     
     infoText = `Front View - ${pallet.numLayers} ชั้น × ${pallet.boxesPerLayer} กล่อง = ${pallet.boxesPerPallet} กล่อง/พาเลท`;
     
   } else if (currentView === 'side') {
-    // Side view: Similar to front but from the side
-    const scale = Math.min((svgWidth - margin * 2) / data.pallet.length, (svgHeight - margin * 2) / pallet.totalHeight) * zoom;
+    // Side view: แก้ไขให้ถูกต้อง
+    const totalHeight = pallet.totalHeight;
+    const scale = Math.min((svgWidth - margin * 2) / data.pallet.length, (svgHeight - margin * 2) / totalHeight) * zoom * 0.7;
+    
     const palletL = data.pallet.length * scale;
-    const palletH = data.pallet.height * scale;
-    const layerH = data.box.height * scale;
+    const palletBaseH = data.pallet.height * scale;
+    const boxLayerH = data.box.height * scale;
+    
     const startX = (svgWidth - palletL) / 2;
-    const startY = svgHeight - margin - palletH - (pallet.numLayers * layerH);
+    const startY = svgHeight - margin - palletBaseH;
     
     // Draw pallet base
-    content += `<rect x="${startX}" y="${startY + pallet.numLayers * layerH}" width="${palletL}" height="${palletH}" 
+    content += `<rect x="${startX}" y="${startY}" width="${palletL}" height="${palletBaseH}" 
                 fill="${preset.pallet}" stroke="${preset.stroke}" stroke-width="3"/>`;
     
     // Draw box layers
     for (let layer = 0; layer < pallet.numLayers; layer++) {
-      const y = startY + (pallet.numLayers - layer - 1) * layerH;
-      content += `<rect x="${startX}" y="${y}" width="${palletL}" height="${layerH}" 
+      const layerY = startY - ((layer + 1) * boxLayerH);
+      content += `<rect x="${startX}" y="${layerY}" width="${palletL}" height="${boxLayerH}" 
                   fill="${data.box.color}" stroke="${preset.stroke}" stroke-width="1.5" opacity="0.8"/>`;
     }
+    
+    // Length dimension line
+    content += `<line x1="${startX}" y1="${startY + palletBaseH + 20}" x2="${startX + palletL}" y2="${startY + palletBaseH + 20}" 
+                stroke="#2095ff" stroke-width="2" marker-start="url(#arrowhead)" marker-end="url(#arrowhead)"/>`;
+    content += `<text x="${startX + palletL/2}" y="${startY + palletBaseH + 40}" text-anchor="middle" fill="#2095ff" font-weight="bold" font-size="14">
+                ${formatUnit(data.pallet.length, data.displayUnit)}</text>`;
     
     infoText = `Side View - ความสูงรวม ${formatUnit(pallet.totalHeight, data.displayUnit)}`;
     
   } else if (currentView === 'iso') {
-    // Isometric view: 3D-like representation
-    const scale = Math.min(svgWidth, svgHeight) * 0.3 * zoom;
+    // Isometric view: แก้ไขให้ถูกต้อง
+    const baseScale = 0.15 * zoom;
     const centerX = svgWidth / 2;
-    const centerY = svgHeight / 2;
+    const centerY = svgHeight / 2 + 30;
     
-    // Isometric projection factors
-    const isoX = 0.866; // cos(30°)
-    const isoY = 0.5;   // sin(30°)
+    // Isometric angles
+    const cos30 = Math.cos(Math.PI / 6); // 0.866
+    const sin30 = Math.sin(Math.PI / 6); // 0.5
     
-    const palletW = data.pallet.width * scale / 1000;
-    const palletL = data.pallet.length * scale / 1000;
-    const palletH = data.pallet.height * scale / 1000;
-    const boxH = data.box.height * scale / 1000;
+    // Scale dimensions
+    const palletW = data.pallet.width * baseScale;
+    const palletL = data.pallet.length * baseScale;
+    const palletH = data.pallet.height * baseScale;
+    const boxH = data.box.height * baseScale;
     
-    // Draw pallet base (isometric)
-    const p1x = centerX - palletW * isoX / 2;
-    const p1y = centerY + palletL * isoY / 2;
-    const p2x = centerX + palletW * isoX / 2;
-    const p2y = centerY + palletL * isoY / 2;
-    const p3x = centerX + palletW * isoX / 2 - palletL * isoX / 2;
-    const p3y = centerY + palletL * isoY / 2 - palletL * isoY / 2;
-    const p4x = centerX - palletW * isoX / 2 - palletL * isoX / 2;
-    const p4y = centerY + palletL * isoY / 2 - palletL * isoY / 2;
-    
-    // Pallet top face
-    content += `<polygon points="${p1x},${p1y-palletH} ${p2x},${p2y-palletH} ${p3x},${p3y-palletH} ${p4x},${p4y-palletH}" 
-                fill="${preset.pallet}" stroke="${preset.stroke}" stroke-width="2"/>`;
-    
-    // Pallet right face
-    content += `<polygon points="${p2x},${p2y-palletH} ${p2x},${p2y} ${p3x},${p3y} ${p3x},${p3y-palletH}" 
-                fill="${preset.pallet}" opacity="0.7" stroke="${preset.stroke}" stroke-width="2"/>`;
-    
-    // Box layers (simplified)
-    for (let layer = 0; layer < pallet.numLayers; layer++) {
-      const layerY = p1y - palletH - (layer + 1) * boxH;
-      content += `<polygon points="${p1x},${layerY} ${p2x},${layerY} ${p3x},${layerY - palletL * isoY / 2} ${p4x},${layerY - palletL * isoY / 2}" 
-                  fill="${data.box.color}" opacity="0.8" stroke="${preset.stroke}" stroke-width="1"/>`;
+    // Calculate isometric coordinates for pallet base
+    function isoPoint(x, y, z) {
+      return {
+        x: centerX + (x - y) * cos30,
+        y: centerY - z - (x + y) * sin30
+      };
     }
     
-    infoText = `Isometric View - 3D Representation`;
+    // Draw pallet base (3D box)
+    const p1 = isoPoint(0, 0, 0);
+    const p2 = isoPoint(palletW, 0, 0);
+    const p3 = isoPoint(palletW, palletL, 0);
+    const p4 = isoPoint(0, palletL, 0);
+    const p5 = isoPoint(0, 0, palletH);
+    const p6 = isoPoint(palletW, 0, palletH);
+    const p7 = isoPoint(palletW, palletL, palletH);
+    const p8 = isoPoint(0, palletL, palletH);
+    
+    // Pallet faces
+    content += `<polygon points="${p5.x},${p5.y} ${p6.x},${p6.y} ${p7.x},${p7.y} ${p8.x},${p8.y}" 
+                fill="${preset.pallet}" stroke="${preset.stroke}" stroke-width="2"/>`;
+    content += `<polygon points="${p6.x},${p6.y} ${p2.x},${p2.y} ${p3.x},${p3.y} ${p7.x},${p7.y}" 
+                fill="${preset.pallet}" opacity="0.8" stroke="${preset.stroke}" stroke-width="2"/>`;
+    content += `<polygon points="${p7.x},${p7.y} ${p3.x},${p3.y} ${p4.x},${p4.y} ${p8.x},${p8.y}" 
+                fill="${preset.pallet}" opacity="0.6" stroke="${preset.stroke}" stroke-width="2"/>`;
+    
+    // Draw box layers
+    for (let layer = 0; layer < pallet.numLayers; layer++) {
+      const layerZ = palletH + (layer * boxH);
+      const layerTop = layerZ + boxH;
+      
+      const b1 = isoPoint(0, 0, layerTop);
+      const b2 = isoPoint(palletW, 0, layerTop);
+      const b3 = isoPoint(palletW, palletL, layerTop);
+      const b4 = isoPoint(0, palletL, layerTop);
+      
+      // Box layer faces
+      content += `<polygon points="${b1.x},${b1.y} ${b2.x},${b2.y} ${b3.x},${b3.y} ${b4.x},${b4.y}" 
+                  fill="${data.box.color}" stroke="${preset.stroke}" stroke-width="1.5" opacity="0.8"/>`;
+      
+      if (layer === pallet.numLayers - 1) {
+        // Side faces for top layer only
+        const b5 = isoPoint(0, 0, layerZ);
+        const b6 = isoPoint(palletW, 0, layerZ);
+        const b7 = isoPoint(palletW, palletL, layerZ);
+        const b8 = isoPoint(0, palletL, layerZ);
+        
+        content += `<polygon points="${b2.x},${b2.y} ${b6.x},${b6.y} ${b7.x},${b7.y} ${b3.x},${b3.y}" 
+                    fill="${data.box.color}" opacity="0.6" stroke="${preset.stroke}" stroke-width="1"/>`;
+        content += `<polygon points="${b3.x},${b3.y} ${b7.x},${b7.y} ${b8.x},${b8.y} ${b4.x},${b4.y}" 
+                    fill="${data.box.color}" opacity="0.4" stroke="${preset.stroke}" stroke-width="1"/>`;
+      }
+    }
+    
+    infoText = `Isometric View - 3D มุมมองรวม ${pallet.boxesPerPallet} กล่อง`;
   }
   
   svg.innerHTML += content;
   document.getElementById('simInfo').textContent = infoText;
 }
+
 
 // ========== EXPORT FUNCTIONS ==========
 function exportSVG() {
